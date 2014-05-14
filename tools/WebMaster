@@ -1,16 +1,17 @@
 #!/usr/bin/env zsh
 help() {
     cat >&1 <<END
+WebMaster — batch WebM encoder for imageboards
 Usage: $0 [file1 options] file1 [[file2 options] file2] ...
 Options:
     o bitrate   - use opus for audio
-    f		- owerwriting files
+    f		- owerwrite files
 	(othervise conversion with existing results will be skipped)
     w width	- scale destination video to given width (default-400)
     s start	- start of needle fragment in source video
     t length	- duration of fragment
-    b		- use "best" quality setting
-Options for previous files used as defaults for next.
+    b		- use "best" VP8 quality setting
+Options of prior files used as defaults for next.
 END
     exit 1
 }

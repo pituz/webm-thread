@@ -5,8 +5,8 @@ Usage: $0 [file1 options] file1 [[file2 options] file2] ...
 Options:
     o bitrate   - use opus for audio
     f		- owerwriting files
-	    (othervise conversion with existing results will be skipped)
-	    w width	- scale destination video to given width (default-400)
+	(othervise conversion with existing results will be skipped)
+    w width	- scale destination video to given width (default-400)
     s start	- start of needle fragment in source video
     t length	- duration of fragment
     b		- use "best" quality setting
@@ -14,6 +14,7 @@ Options for previous files used as defaults for next.
 END
     exit 1
 }
+[[ -z $1 ]] && help
 set -e
 source $(dirname $0)/.zshrc.avenc
 opts=(-auto-alt-ref 1 -lag-in-frames 16)

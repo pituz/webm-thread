@@ -1,0 +1,26 @@
+
+hkbr() {
+    if [[ -z $1 ]]
+    then
+        cat <<END
+Usage: hkbr time [audio bitrate or size] [file size]
+    value <= 320 is bitrate, > 320 — size
+END
+        return 1
+    fi
+    local fs=${3-6144}    
+    if [[ $1 =~ '.+:.+:.+' ]]
+        then ((s = ${1%%:*} * 3600 + ${${1%:*}#*:} * 60 + ${1##*:}))
+    elif [[ $1 =~ '.+:.+' ]]
+        then ((s = ${1%:*} * 60 + ${1##*:}))
+    else
+        s=$1
+    fi
+    if [[ -z $2 ]]
+        then echo "$((fs * 8 / s - 120))k"
+    elif [[ $2 -le 320 ]]
+        then echo "$((fs * 8 / s - $2))k"
+    else
+        echo "$(( (fs - $2) * 8 / s))k"
+    fi
+}

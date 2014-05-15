@@ -29,7 +29,7 @@ fsize=6144
 [ $FFMPEG ] || FFMPEG=-(ffmpeg -hide_banner)
 while [[ ! -z $1 ]]
 do
-    while getopts "o:fw:s:t:" o
+    while getopts "o:fw:s:t:h" o
     do
         case $o in
             o)  aopts=(-c:a libopus -b:a "${OPTARG}k")

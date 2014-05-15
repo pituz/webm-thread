@@ -26,7 +26,7 @@ force=0
 aopts=(-q:a 2)
 width=400
 fsize=6144
-fpg=(ffmpeg -hide_banner)
+[ $FFMPEG ] || FFMPEG=-(ffmpeg -hide_banner)
 while [[ ! -z $1 ]]
 do
     while getopts "o:fw:s:t:" o
@@ -63,9 +63,9 @@ do
     fi
     ((length)) || length=$(ffprobe $f 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')
     [ -f $af ] && ! ((force)) || 
-    $fpg $iopts -i $f $opts -vf scale=$width:-1 -pass 1 $aopts -strict -2 -y $af || break
+    $FFMPEG $iopts -i $f $opts -vf scale=$width:-1 -pass 1 $aopts -strict -2 -y $af || break
     audio_size=$(( $(stat -c %s $af) / 1024 ))
-    $fpg $iopts -i $f -i $af $opts -map 0:v -map 1:a \
+    $FFMPEG $iopts -i $f -i $af $opts -map 0:v -map 1:a \
         -strict -2 \
         -c:a copy \
         -vf scale=$width:-1 \

@@ -53,10 +53,10 @@ Opus'у наоборот указывать битрейт необходимо,
 Для начала нужно узнать параметры уже сконвертированного видео:
 `ffmpeg -hide_banner -i video.webm`
 Смотрим эти строчки:
-`Duration: 00:02:45.02, start: 0.000000, bitrate: 301 kb/s
-Stream #0:0: Video: vp8, yuv420p, 500x215, SAR 1:1 DAR 100:43, 23.98 fps, 23.98 tbr, 1k tbn, 1k
-tbc (default)
-Stream #0:1: Audio: opus, 48000 Hz, stereo, s16`
+`Duration: 00:02:45.02, start: 0.000000, bitrate: 301 kb/s`
+`Stream #0:0: Video: vp8, yuv420p, 500x215, SAR 1:1 DAR 100:43, 23.98 fps, 23.98 tbr, 1k tbn, 1k`
+`tbc (default)`
+`Stream #0:1: Audio: opus, 48000 Hz, stereo, s16`
 Нам нужны битрейт и fps, а также используемые кодеки. Далее создаем видео-превью:
 `ffmpeg -i pic.jpg -filter_complex "anullsrc [a]" -map 0:v -map "[a]" -shortest <параметры энкода видео> pic.webm`
 Параметры энкода, например, следующие:
@@ -64,8 +64,8 @@ Stream #0:1: Audio: opus, 48000 Hz, stereo, s16`
 Затем склеиваем его с основным видео:
 `mkvmerge pic.webm + video.webm -o out.webm`
 Если хотим склеить ffmpeg'ом, то создаем файл в следующем формате:
-`file 'pic.webm'
-file 'video.webm'`
+`file 'pic.webm'`
+`file 'video.webm'`
 Кавычки **обязательно** одинарные. Затем склеиваем файлы:
 `ffmpeg -f concat -i filelist.txt -c copy video.pre.webm`
 Не забывайт про -strict -2, если используется звук Opus.

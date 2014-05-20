@@ -5,6 +5,6 @@
 Вернуть: `javascript:($('.post').css('display','table'))()`
 Скрыть все посты кроме удалённых: `javascript:($('.reply').hide(); $('.de-ppanel-del').parent.show())()`
 Вернуть: `javascript:($('.reply').show())()`
-Отмечать красным посты по клику даты: `javascript:($('.posttime').click(function() {$(this).parent.css('border-color','red')}))()`
+Отмечать красным посты по клику даты: `javascript:($('.posttime').click(function(event) {$(this).parent().css('border-color','red')}))()`
 
 Требуется наличие куклоскрипта.

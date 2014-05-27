@@ -13,18 +13,28 @@ hkbr() {
     if [[ -z $1 ]]
     then
         cat <<END
-Usage: hkbr time [audio bitrate or size] [file size]
-    value <= 320 is bitrate, > 320 — size
+hkbr — video bitrate calculator
+Usage: hkbr time [audio] [result size]
+    time - length of fragment<F3>
+    audio may be one of:
+	existing file: use file size
+	0-320: bitrate, kbit/s; default - 120k
+	>320: size, kb
+    result size - desired size of final file, kb
+	default - 6144
 END
         return 1
     fi
     local fs=${3-6144}    
     local s=$(time_to_seconds $1)
     if [[ -z $2 ]]
-        then echo "$((fs * 8 / s - 120))k"
+	then ((as = s * 120 / 8))
+    elif [[ -f $2 ]]
+	then as=$(( $(stat -c '%s' $2) / 1024))
     elif [[ $2 -le 320 ]]
-        then echo "$((fs * 8 / s - $2))k"
+	then ((as = s * $s / 8))
     else
-        echo "$(( (fs - $2) * 8 / s))k"
+	as=$2
     fi
+    echo "$(( (fs - as) * 8 / s))k"
 }

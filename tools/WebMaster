@@ -69,7 +69,7 @@ do
             s)  start=$OPTARG
                 ;;
             t)  opts+=(-t $OPTARG)
-                length=$OPTARG
+		length=$(time_to_seconds $OPTARG)
                 ;;
             b)  best=1
                 ;;

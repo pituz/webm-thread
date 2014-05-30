@@ -20,6 +20,7 @@ Options:
 	existing file - picture
 	time - copy frame of video
     -n filename - output filename (.webm will be added)
+    -F size     - result size, kilobytes
     -S filename - render subtitles (. to use subs from container)
 Options of prior files will be used as defaults for next.
 END
@@ -54,7 +55,7 @@ do
     unset of
     vfilters=()
     opts=(-auto-alt-ref 1 -lag-in-frames 16)
-    while getopts "a:fbw:s:t:n:S:h" o
+    while getopts "a:fbw:s:t:n:S:hF:" o
     do
         case $o in
 	    a)  if ((OPTARG>=10))
@@ -78,6 +79,7 @@ do
 	    n)  of="${OPTARG%.webm}.webm"
 		;;
 	    S)  subs=$OPTARG;;
+	    F)  fsize=$OPTARG;;
 	    h)  help
 		;;
             

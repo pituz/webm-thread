@@ -1,24 +1,46 @@
 #!/usr/bin/env zsh
+programname=$(basename $0)
 help() {
     cat >&1 <<END
-WebMaster — batch WebM encoder for imageboards
-Usage: $0 [file1 options] file1 [[file2 options] file2] ...
+WebMaster — wishmaster for WebM endoding: magic button with additional controls
+Usage: $programname [file1 options] file1 [[file2 options] file2] ...
 Options:
-    o bitrate   - use opus for audio
-    f		- owerwrite files
+    .		- use last specified file
+    -s time	- start of needle fragment in source video
+    -t length	- duration of fragment
+    -a value	- audio option:
+	0-9: libvorbis quality, default - 2
+	>=10: opus bitrate, kbit/s
+    -f		- owerwrite files
 	(othervise conversion with existing results will be skipped)
-    w width	- scale destination video to given width (default-400)
-    s start	- start of needle fragment in source video
-    t length	- duration of fragment
-    b		- use "best" VP8 quality setting
-Options of prior files used as defaults for next.
+    -w width	- scale destination video to given width (default-400)
+	. - don't scale
+    -b		- use "best" VP8 quality setting
+    -p value	- add preview (not implemented yet):
+	existing file - picture
+	time - copy frame of video
+    -n filename - output filename (.webm will be added)
+    -S filename - render subtitles (. to use subs from container)
+Options of prior files will be used as defaults for next.
 END
     exit 1
 }
 [[ -z $1 ]] && help
 set -e
 source $(dirname $0)/.zshrc.avenc
-opts=(-auto-alt-ref 1 -lag-in-frames 16)
+
+joinstr() {
+    local sep=$1
+    local s=$2
+    shift
+    while [[ ! -z $2 ]]
+    do
+	s="$s,$2"
+	shift
+    done
+    echo $s
+}
+
 aopts=()
 vopts=()
 iopts=()
@@ -26,51 +48,94 @@ force=0
 aopts=(-q:a 2)
 width=400
 fsize=6144
-[ $FFMPEG ] || FFMPEG=-(ffmpeg -hide_banner)
+[ $FFMPEG ] || FFMPEG=(ffmpeg -hide_banner)
 while [[ ! -z $1 ]]
 do
-    while getopts "o:fw:s:t:h" o
+    unset of
+    vfilters=()
+    opts=(-auto-alt-ref 1 -lag-in-frames 16)
+    while getopts "a:fbw:s:t:n:S:h" o
     do
         case $o in
-            o)  aopts=(-c:a libopus -b:a "${OPTARG}k")
+	    a)  if ((OPTARG>=10))
+		    then aopts=(-c:a libopus -b:a "${OPTARG}k")
+		    else aopts=(-q:a $OPTARG)
+		fi
                 ;;
             f)  force=1
                 ;;
             w)  width=$OPTARG
                 ;;
-            s)  iopts+=(-ss $OPTARG)
+            s)  start=$OPTARG
                 ;;
             t)  opts+=(-t $OPTARG)
                 length=$OPTARG
                 ;;
-            b)  opts+=(-quality best)
+            b)  opts+=(best=1)
                 ;;
+	    p)	preview=$OPTARG
+		;;
+	    n)  of="${OPTARG%.webm}.webm"
+		;;
+	    S)  subs=$OPTARG;;
 	    h)  help
 		;;
             
         esac
     done
     shift $((OPTIND - 1))
-    [[ -z $1 ]] && help
-    f=$1
-    of="${$(basename $f)%.*}.webm"
+    [[ $1 == . ]] || f=$1
+    [[ -z $f ]] && help
+
+    [[ $width != . ]] && vfilters+=(scale=$width:-1)
+    if [[ ! -z $start ]]
+    then
+	[[ -z $subs ]] && iopts+=(-ss $start) || opts+=(-ss $start)
+    fi
+    if [[ ! -z $subs ]]
+    then
+	if [[ $subs == . ]]
+	then
+	    subs="$$.${f##*.}"
+	    ln -s $f $subs
+	else
+	    subs_=$subs
+	    subs="$$.${subs##*.}"
+	    ln -s $subs_ $subs
+	fi
+	vfilters+=(subs=$subs)
+    fi
+    [[ -z $of ]] && of="${$(basename $f)%.*}.webm"
     [[ $of == $f ]] && of=${f/webm/converted.webm}
     af=${of/webm/audio.webm}
-    if ! ((force)) && [ -f $of ]
+    vf=${of/webm/video.webm}
+    if ! ((force)) && [[ -f $of ]]
     then
         shift
         continue
     fi
     ((length)) || length=$(ffprobe $f 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')
-    [ -f $af ] && ! ((force)) || 
-    $FFMPEG $iopts -i $f $opts -vf scale=$width:-1 -pass 1 $aopts -strict -2 -y $af || break
-    audio_size=$(( $(stat -c %s $af) / 1024 ))
-    $FFMPEG $iopts -i $f -i $af $opts -map 0:v -map 1:a \
-        -strict -2 \
-        -c:a copy \
-        -vf scale=$width:-1 \
-        -b:v $(hkbr $length $audio_size $fsize) \
-        -pass 2 -y $of || break 2
-    [[ $(stat -c %s $of) -le $((fsize * 1024)) ]] && rm $af || echo "$of is too big"
+    ((${#vfilters})) && opts+=(-vf "$(joinstr , $vfilters)")
+    (($best)) && opts+=(-quality best)
+    [[ -f $af ]] && ! ((force)) ||
+	$FFMPEG $iopts -i $f $opts -pass 1 $aopts -strict -2 -y $af ||
+	break
+    $FFMPEG $iopts -i $f $opts -map 0:v -an \
+        -b:v $(hkbr $length $af $fsize) \
+        -pass 2 -y $vf || break 2
+    mkvmerge $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
+					     # so checking for result existence instead
+    if [[ ! -z $preview ]]
+    then
+	pf="${of%.webm}-p.webm"
+	if [[ -f $preview ]]
+	    then ipreview=(-i $preview)
+	else
+	    ipreview=(-ss $preview -i $f)
+	fi
+	$FFMPEG $ipreview -filter_complex 'anullsrc [a]' -map 0:v -map '[a]' -vframes 1 $aopts 
+    fi
+    [[ $(stat -c %s $of) -le $((fsize * 1024)) ]] && rm $af $vf || echo "$of is too big"
+    [[ -h $subs ]] && rm $subs
     shift
 done

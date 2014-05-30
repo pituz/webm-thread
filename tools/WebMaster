@@ -103,7 +103,7 @@ do
 	    subs="$$.${subs##*.}"
 	    ln -s $subs_ $subs
 	fi
-	vfilters+=(subs=$subs)
+	vfilters+=(subtitles=$subs)
     fi
     [[ -z $of ]] && of="${$(basename $f)%.*}.webm"
     [[ $of == $f ]] && of=${f/webm/converted.webm}

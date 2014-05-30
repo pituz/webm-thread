@@ -71,7 +71,7 @@ do
             t)  opts+=(-t $OPTARG)
                 length=$OPTARG
                 ;;
-            b)  opts+=(best=1)
+            b)  best=1
                 ;;
 	    p)	preview=$OPTARG
 		;;

@@ -11,6 +11,7 @@ Options:
     -a value	- audio option:
 	0-9: libvorbis quality, default - 2
 	>=10: opus bitrate, kbit/s
+	.: copy audio
     -f		- owerwrite files
 	(othervise conversion with existing results will be skipped)
     -w width	- scale destination video to given width (default-400)
@@ -49,6 +50,7 @@ force=0
 aopts=(-q:a 2)
 width=400
 fsize=6144
+best=0
 [ $FFMPEG ] || FFMPEG=(ffmpeg -hide_banner)
 while [[ ! -z $1 ]]
 do
@@ -58,7 +60,9 @@ do
     while getopts "a:fbw:s:t:n:S:hF:" o
     do
         case $o in
-	    a)  if ((OPTARG>=10))
+	    a)  if [[ $OPTARG == "." ]]
+		    then aopts=(-c:a copy)
+		elif (($OPTARG >= 10))
 		    then aopts=(-c:a libopus -b:a "${OPTARG}k")
 		    else aopts=(-q:a $OPTARG)
 		fi

@@ -57,6 +57,7 @@ do
     unset of
     vfilters=()
     opts=(-auto-alt-ref 1 -lag-in-frames 16)
+    OPTIND=1
     while getopts "a:fbw:s:t:n:S:hF:" o
     do
         case $o in

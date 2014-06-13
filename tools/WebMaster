@@ -2,7 +2,7 @@
 programname=$(basename $0)
 help() {
     cat >&1 <<END
-WebMaster — wishmaster for WebM endoding: magic button with additional controls
+WebMaster — wishmaster for WebM encoding: magic button with additional controls
 Usage: $programname [file1 options] file1 [[file2 options] file2] ...
 Options:
     .		- use last specified file

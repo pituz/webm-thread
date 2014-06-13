@@ -125,9 +125,9 @@ do
     ((${#vfilters})) && opts+=(-vf "$(joinstr , $vfilters)")
     (($best)) && opts+=(-quality best)
     [[ -f $af ]] && ! ((force)) ||
-	$FFMPEG $iopts -i $f $opts -pass 1 $aopts -strict -2 -y $af ||
+	$FFMPEG $iopts -i $f $opts -map 0:v:0 -map 0:a:0 -pass 1 $aopts -strict -2 -y $af ||
 	break
-    $FFMPEG $iopts -i $f $opts -map 0:v -an \
+    $FFMPEG $iopts -i $f $opts -map 0:v:0 -an \
         -b:v $(hkbr $length $af $fsize) \
         -pass 2 -y $vf || break 2
     mkvmerge $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,

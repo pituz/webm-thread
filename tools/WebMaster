@@ -2,7 +2,7 @@
 programname=$(basename $0)
 help() {
     cat >&1 <<END
-WebMaster — wishmaster for WebM endoding: magic button with additional controls
+WebMaster — wishmaster for WebM encoding: magic button with additional controls
 Usage: $programname [file1 options] file1 [[file2 options] file2] ...
 Options:
     .		- use last specified file
@@ -62,6 +62,7 @@ do
     unset of
     vfilters=()
     opts=(-auto-alt-ref 1 -lag-in-frames 16)
+    OPTIND=1
     while getopts "a:fbw:s:t:n:S:hF:" o
     do
         case $o in
@@ -129,9 +130,9 @@ do
     ((${#vfilters})) && opts+=(-vf "$(joinstr , $vfilters)")
     (($best)) && opts+=(-quality best)
     [[ -f $af ]] && ! ((force)) ||
-	$FFMPEG $iopts -i $f $opts -pass 1 $aopts -strict -2 -y $af ||
+	$FFMPEG $iopts -i $f $opts -map 0:v:0 -map 0:a:0 -pass 1 $aopts -strict -2 -y $af ||
 	break
-    $FFMPEG $iopts -i $f $opts -map 0:v -an \
+    $FFMPEG $iopts -i $f $opts -map 0:v:0 -an \
         -b:v $(hkbr $length $af $fsize) \
         -pass 2 -y $vf || break 2
     mkvmerge $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,

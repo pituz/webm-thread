@@ -16,8 +16,8 @@ for pass in 1 2
         -i thread-tv-clean-19_33-571:350.png \
         $oargs \
         -filter_complex '
-            [0:v] scale=552:317 [v0],
-            [v0] pad=600:446:20:35:black [v1],
+            [0:v] scale=-1:317 [v0],
+            [v0] pad=600:446:((552-iw)/2+20):35:black [v1],
             [v1] [1:v] overlay [v2]' \
         -map '[v2]' -map '0:a' -ac 2 -crf 20 -b:v $(hkbr $length)  -pass $pass -y "$(basename $1)-overlay-v.webm" || exit 1
 if ! ((nofirstframe))

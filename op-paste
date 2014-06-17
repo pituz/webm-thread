@@ -77,5 +77,5 @@ Opus'у наоборот указывать битрейт необходимо,
 Функция hkbr вычисления битрейта видео по длительности в zsh: https://github.com/pituz/webm-thread/blob/master/tools/.zshrc.avenc
 Гуй с минимумом кнопок для ретардов (сперма-only): https://github.com/WebMBro/WebMConverter/releases.
 
-Шаблон оп-пика (GIMP): http://rghost.ru/54684885
+Исходники op-webm'а (скрипт на zsh и пикчи): https://github.com/pituz/webm-thread/tree/master/overlay
 Текст поста: https://github.com/pituz/webm-thread/blob/master/op-paste

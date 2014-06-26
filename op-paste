@@ -72,7 +72,7 @@ Opus'у наоборот указывать битрейт необходимо,
 
 **Ссылки**
 Программы и их документация: http://ffmpeg.org, http://mpv.io, http://www.bunkus.org/videotools/mkvtoolnix/.
-Скрипт для удобного вырезания фрагментов в mpv (выводит заготовки команд с временем с точностью до кадра и битрейтом, скриншот: http://rghost.ru/55038013/image.png): http://pastebin.com/q6MTsKQ4.
+Скрипт для удобного вырезания фрагментов в mpv (выводит заготовки команд с временем с точностью до кадра и битрейтом, скриншот: http://rghost.ru/55038013/image.png): https://gist.github.com/pituz/7ba7aef17f16ed73a484.
 Функция hkbr вычисления битрейта видео по длительности в zsh: https://github.com/pituz/webm-thread/blob/master/tools/.zshrc.avenc
 Гуй с минимумом кнопок для ретардов (сперма-only): https://github.com/WebMBro/WebMConverter/releases.
 

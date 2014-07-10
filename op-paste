@@ -57,7 +57,7 @@ Opus'у наоборот указывать битрейт необходимо,
 `Stream #0:0: Video: vp8, yuv420p, 500x215, SAR 1:1 DAR 100:43, 23.98 fps, 23.98 tbr, 1k tbn, 1k`
 `tbc (default)`
 `Stream #0:1: Audio: opus, 48000 Hz, stereo, s16`
-Нам нужны битрейт и fps, а также используемые кодеки. Далее создаем видео-превью:
+Нам нужны битрейт и fps, а также используемые кодеки. Далее создаем видео-превью (угловые скобки писать не нужно):
 `ffmpeg -i pic.jpg -filter_complex "anullsrc [a]" -map 0:v -map "[a]" -shortest <параметры энкода видео> pic.webm`
 Параметры энкода, например, следующие:
 `-c:v libvpx -c:a libopus -strict -2 -b:v 301k -r 23.98`

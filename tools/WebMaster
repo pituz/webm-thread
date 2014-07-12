@@ -103,7 +103,7 @@ do
     [[ $1 == . ]] || f=$1
     [[ -z $f ]] && help
 
-    [[ $width != . ]] && vfilters+=("scale=$width:$width/dar")
+    [[ $width != . ]] && vfilters+=("scale=${width}:trunc(${width}/dar/2)*2")
     if [[ ! -z $start ]]
     then
 	[[ -z $subs ]] && iopts+=(-ss $start) || opts+=(-ss $start)
@@ -144,7 +144,7 @@ do
     $FFMPEG $iopts -i $f $opts -map 0:v:0 -an \
         -b:v $(hkbr $length $af $fsize) \
         -pass 2 -y $vf || break 2
-    ffmpeg -i $vf -i $af -map 0:v -map 1:a -c copy -strict -2 $of
+    ffmpeg -i $vf -i $af -map 0:v -map 1:a -c copy -strict -2 -y $of
     #mkvmerge $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
 					     # so checking for result existence instead
     if [[ ! -z $preview ]]

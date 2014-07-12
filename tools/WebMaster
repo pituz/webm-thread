@@ -155,7 +155,7 @@ do
 	    echo "[SKIP] -p $preview: option not implemented yet"
 	else
 	    ipreview=(-ss $preview -i $of)
-	    $FFMPEG $ipreview -c copy -vframes 1 -strict -2 $of.1stframe.webm
+	    $FFMPEG $ipreview -b:v 5M -crf 20 -vframes 1 -af volume=0 $aopts -strict -2 $of.1stframe.webm
 	#fi
 	    mkvmerge $of.1stframe.webm + $of -o $of.pr.webm || :
 	    [ -f $of.pr.webm ] && mv $of.pr.webm $of && rm $of.1stframe.webm

@@ -12,6 +12,7 @@ Options:
 	0-9: libvorbis quality, default - 2
 	>=10: opus bitrate, kbit/s
 	.: copy audio
+	n: disable audio
     -f		- owerwrite files
 	(othervise conversion with existing results will be skipped)
     -w width	- scale destination video to given width (default-400)
@@ -65,7 +66,10 @@ do
 		    then aopts=(-c:a copy)
 		elif (($OPTARG >= 10))
 		    then aopts=(-c:a libopus -b:a "${OPTARG}k")
-		    else aopts=(-q:a $OPTARG)
+		elif [[ $OPTARG == "n" ]]
+		    then aopts=(-an)
+		else
+		    aopts=(-q:a $OPTARG)
 		fi
                 ;;
             f)  force=1

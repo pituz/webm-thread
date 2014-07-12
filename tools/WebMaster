@@ -134,7 +134,8 @@ do
     $FFMPEG $iopts -i $f $opts -map 0:v:0 -an \
         -b:v $(hkbr $length $af $fsize) \
         -pass 2 -y $vf || break 2
-    mkvmerge $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
+    ffmpeg -i $vf -i $af -map 0:v -map 1:a -c copy -strict -2 $of
+    #mkvmerge $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
 					     # so checking for result existence instead
     if [[ ! -z $preview ]]
     then

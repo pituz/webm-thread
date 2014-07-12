@@ -103,7 +103,7 @@ do
     [[ $1 == . ]] || f=$1
     [[ -z $f ]] && help
 
-    [[ $width != . ]] && vfilters+=(scale=$width:-1)
+    [[ $width != . ]] && vfilters+=("scale=$width:$width/dar")
     if [[ ! -z $start ]]
     then
 	[[ -z $subs ]] && iopts+=(-ss $start) || opts+=(-ss $start)

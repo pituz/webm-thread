@@ -28,6 +28,18 @@ Options of prior files will be used as defaults for next.
 END
     exit 1
 }
+# defaults
+width=400
+fsize=6144
+best=0
+aopts=(-q:a 2)
+force=0
+[ $FFMPEG ] || FFMPEG=(ffmpeg -hide_banner)
+
+# config file
+for f in $0.rc ~/.${programname}rc; [[ -f $f ]] && source  $f
+unset f
+
 [[ -z $1 ]] && help
 set -e
 source $(dirname $0)/.zshrc.avenc
@@ -44,15 +56,8 @@ joinstr() {
     echo $s
 }
 
-aopts=()
 vopts=()
 iopts=()
-force=0
-aopts=(-q:a 2)
-width=400
-fsize=6144
-best=0
-[ $FFMPEG ] || FFMPEG=(ffmpeg -hide_banner)
 while [[ ! -z $1 ]]
 do
     unset of

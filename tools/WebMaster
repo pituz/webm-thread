@@ -110,11 +110,16 @@ do
 	    subs="$$.${f##*.}"
 	    ln -s $f $subs
 	else
-	    subs_=$subs
+	    subsfile=$subs
 	    subs="$$.${subs##*.}"
-	    ln -s $subs_ $subs
+	    ln -s $subsfile $subs
 	fi
-	vfilters+=(subtitles=$subs)
+	if [[ $subs =~ ass$ ]]
+	then
+	    vfilters+=(ass=$subs)
+	else
+	    vfilters+=(subtitles=$subs)
+	fi
     fi
     [[ -z $of ]] && of="${$(basename $f)%.*}.webm"
     [[ $of == $f ]] && of=${f/webm/converted.webm}

@@ -43,6 +43,7 @@
 Внимание: **libvorbis'у нельзя указывать фиксированный битрейт** (-b:a) — это сильно портит качество звука.
 Opus'у наоборот указывать битрейт необходимо, также для отключения ограничений старой версии формата webm нужно указать `-strict -2`:
 `ffmpeg -i video.mkv -c:a libopus -vbr on -application audio -b:a 48k -strict -2 -ac 2 out.webm`
+**Внимание:** ffmpeg неэффективно муксит Opus, итоговый файл получается на 10-20% больше, чем с mkvmerge.
 
 **Наложение субтитров**
 `ffmpeg -i animu.mkv -ss 10:01 -t 30 -vf scale=500:-1,subtitles=animu.mkv -b:v 300k out.webm`

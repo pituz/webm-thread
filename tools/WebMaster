@@ -6,6 +6,7 @@ WebMaster — wishmaster for WebM encoding: magic button with additional control
 Usage: $programname [file1 options] file1 [[file2 options] file2] ...
 Options:
     .		- use last specified file
+    -9		- use VP9 video codec
     -s time	- start of needle fragment in source video
     -t length	- duration of fragment
     -a value	- audio option:
@@ -28,13 +29,16 @@ Options of prior files will be used as defaults for next.
 END
     exit 1
 }
+log() {
+    echo -e "[i] $@"
+}
 # defaults
 width=400
 fsize=6144
 best=0
 aopts=(-q:a 2)
 force=0
-[ $FFMPEG ] || FFMPEG=(ffmpeg -hide_banner)
+[ $FFMPEG ] || FFMPEG=(ffmpeg -hide_banner -v warning -stats)
 
 # config file
 for f in $0.rc ~/.${programname}rc; [[ -f $f ]] && source  $f
@@ -56,17 +60,18 @@ joinstr() {
     echo $s
 }
 
-vopts=()
 iopts=()
 while [[ ! -z $1 ]]
 do
     unset of
     vfilters=()
-    opts=(-auto-alt-ref 1 -lag-in-frames 16)
+    vopts=()
     OPTIND=1
-    while getopts "a:fbw:s:t:n:S:hF:p:" o
+    while getopts "9a:fbw:s:t:n:S:hF:p:" o
     do
         case $o in
+	    9)  vp9=1
+		;;
 	    a)  if [[ $OPTARG == "." ]]
 		    then aopts=(-c:a copy)
 		elif (($OPTARG >= 10))
@@ -84,6 +89,7 @@ do
             s)  start=$OPTARG
                 ;;
             t)  opts+=(-t $OPTARG)
+		aopts+=(-t $OPTARG)
 		length=$(time_to_seconds $OPTARG)
                 ;;
             b)  best=1
@@ -103,6 +109,13 @@ do
     [[ $1 == . ]] || f=$1
     [[ -z $f ]] && help
 
+    if ((vp9))
+    then
+	vopts+=(-c:v libvpx-vp9 -strict -2)
+    else
+	vopts=(-c:v libvpx -auto-alt-ref 1 -lag-in-frames 16)
+    fi
+
     [[ $width != . ]] && vfilters+=("scale=${width}:trunc(${width}/dar/2)*2")
     if [[ ! -z $start ]]
     then
@@ -113,11 +126,11 @@ do
 	if [[ $subs == . ]]
 	then
 	    subs="$$.${f##*.}"
-	    ln -s $f $subs
+	    ln -sf $f $subs
 	else
 	    subsfile=$subs
 	    subs="$$.${subs##*.}"
-	    ln -s $subsfile $subs
+	    ln -sf $subsfile $subs
 	fi
 	if [[ $subs =~ ass$ ]]
 	then
@@ -136,16 +149,29 @@ do
         continue
     fi
     ((length)) || length=$(ffprobe $f 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')
-    ((${#vfilters})) && opts+=(-vf "$(joinstr , $vfilters)")
+    ((${#vfilters})) && vopts+=(-vf "$(joinstr , $vfilters)")
     (($best)) && opts+=(-quality best)
+    log "Encoding audio"
     [[ -f $af ]] && ! ((force)) ||
-	$FFMPEG $iopts -i $f $opts -map 0:v:0 -map 0:a:0 -pass 1 $aopts -strict -2 -y $af ||
-	break
-    $FFMPEG $iopts -i $f $opts -map 0:v:0 -an \
-        -b:v $(hkbr $length $af $fsize) \
-        -pass 2 -y $vf || break 2
-    ffmpeg -i $vf -i $af -map 0:v -map 1:a -c copy -strict -2 -y $of
-    #mkvmerge $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
+	$FFMPEG $iopts -i $f \
+	    -vn -map 0:a:0 $opts $aopts -strict -2 -y $af || break
+    vbitrate=$(hkbr $length $af $fsize)
+    echo -e "\n"
+    log "Calculated video bitrate: ${vbitrate}kbps"
+    log "Examining video"
+    [[ -f ${of}-0.log ]] && ! ((force)) || 
+	$FFMPEG $iopts -i $f \
+	    -an -map 0:v:0 $opts $vopts -pass 1 -passlogfile $of -f rawvideo -f null /dev/null || break
+    echo
+    echo -e "\n"
+    log "Encoding video"
+    $FFMPEG $iopts -i $f \
+	-an -map 0:v:0 $opts $vopts \
+        -b:v $vbitrate \
+        -pass 2 -passlogfile $of -y $vf || break
+    #ffmpeg -i $vf -i $af -map 0:v -map 1:a -c copy -strict -2 -y $of
+    echo -e "\n"
+    mkvmerge $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
 					     # so checking for result existence instead
     if [[ ! -z $preview ]]
     then
@@ -162,7 +188,7 @@ do
 	fi
 	#$FFMPEG $ipreview -filter_complex 'anullsrc [a]' -map 0:v -map '[a]' -vframes 1 $aopts 
     fi
-    [[ $(stat -c %s $of) -le $((fsize * 1024)) ]] && rm $af $vf || echo "$of is too big"
+    [[ $(stat -c %s $of) -le $((fsize * 1024)) ]] && rm $af $vf $of.log || echo "$of is too big"
     [[ -h $subs ]] && rm $subs
     shift
 done

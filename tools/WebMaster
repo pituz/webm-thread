@@ -188,7 +188,14 @@ do
 	fi
 	#$FFMPEG $ipreview -filter_complex 'anullsrc [a]' -map 0:v -map '[a]' -vframes 1 $aopts 
     fi
-    [[ $(stat -c %s $of) -le $((fsize * 1024)) ]] && rm $af $vf $of.log || echo "$of is too big"
-    [[ -h $subs ]] && rm $subs
+    ofsize="$(stat -c %s $of)"  # result file size
+    log "$of encoded. Size: $((ofsize/1024))"
+    if ((ofsize > fsize * 1024))
+    then
+	log "$of is too big, leaving temporary files"
+    else
+	rm $af $vf "$of-0.log"
+    fi
+    [[ subs =~  ^[0-9]\+\\..{3}$ ]] && [[ -h $subs ]] && rm $subs
     shift
 done

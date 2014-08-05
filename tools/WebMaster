@@ -111,7 +111,7 @@ do
 
     if ((vp9))
     then
-	vopts+=(-c:v libvpx-vp9 -strict -2)
+	vopts+=(-c:v libvpx-vp9 -strict -2 -auto-alt-ref 1 -lag-in-frames 25)
     else
 	vopts=(-c:v libvpx -auto-alt-ref 1 -lag-in-frames 16)
     fi

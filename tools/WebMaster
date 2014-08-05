@@ -16,9 +16,10 @@ Options:
 	n: disable audio
     -f		- owerwrite files
 	(othervise conversion with existing results will be skipped)
-    -w width	- scale destination video to given width (default-400)
+    -w width	- scale destination video to given width (default: 400)
 	. - don't scale
     -b		- use "best" VP8 quality setting
+    -c crf	- specify constant rate factor (default: 16)
     -p value	- add preview:
 	existing file - picture (not implemented yet)
 	time - copy frame of video
@@ -38,6 +39,7 @@ fsize=6144
 best=0
 aopts=(-q:a 2)
 force=0
+crf=16
 [ $FFMPEG ] || FFMPEG=(ffmpeg -hide_banner -v warning -stats)
 
 # config file
@@ -67,7 +69,7 @@ do
     vfilters=()
     vopts=()
     OPTIND=1
-    while getopts "9a:fbw:s:t:n:S:hF:p:" o
+    while getopts "9a:fbc:w:s:t:n:S:hF:p:" o
     do
         case $o in
 	    9)  vp9=1
@@ -94,6 +96,8 @@ do
                 ;;
             b)  best=1
                 ;;
+	    c)	crf=$OPTARG
+		;;
 	    p)	preview=$OPTARG
 		;;
 	    n)  of="${OPTARG%.webm}.webm"
@@ -167,7 +171,7 @@ do
     log "Encoding video"
     $FFMPEG $iopts -i $f \
 	-an -map 0:v:0 $opts $vopts \
-        -b:v $vbitrate \
+        -b:v $vbitrate -crf $crf \
         -pass 2 -passlogfile $of -y $vf || break
     #ffmpeg -i $vf -i $af -map 0:v -map 1:a -c copy -strict -2 -y $of
     echo -e "\n"

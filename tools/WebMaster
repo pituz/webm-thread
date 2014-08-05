@@ -158,6 +158,7 @@ do
         continue
     fi
     ((length)) || length=$(ffprobe $f 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')
+    ((start)) && ((length = $(time_to_seconds $length) - $(time_to_seconds $start)))
     ((${#vfilters})) && vopts+=(-vf "$(joinstr , $vfilters)")
     (($best)) && opts+=(-quality best)
     log "Encoding audio"

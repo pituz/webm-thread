@@ -20,6 +20,8 @@ Options:
 	. - don't scale
     -b		- use "best" VP8 quality setting
     -c crf	- specify constant rate factor (default: 16)
+    -B bitrate  - specify video bitrate, bps (suffixes: k, m, g)
+	.: calculate bitrate from file size (default)
     -p value	- add preview:
 	existing file - picture (not implemented yet)
 	time - copy frame of video
@@ -40,6 +42,7 @@ best=0
 aopts=(-q:a 2)
 force=0
 crf=16
+force_bitrate=.
 [ $FFMPEG ] || FFMPEG=(ffmpeg -hide_banner -v warning -stats)
 
 # config file
@@ -69,7 +72,7 @@ do
     vfilters=()
     vopts=()
     OPTIND=1
-    while getopts "9a:fbc:w:s:t:n:S:hF:p:" o
+    while getopts "9a:fbc:B:w:s:t:n:S:hF:p:" o
     do
         case $o in
 	    9)  vp9=1
@@ -97,6 +100,8 @@ do
             b)  best=1
                 ;;
 	    c)	crf=$OPTARG
+		;;
+	    B)	force_bitrate=$OPTARG
 		;;
 	    p)	preview=$OPTARG
 		;;
@@ -161,7 +166,12 @@ do
 	    -vn -map 0:a:0 $opts $aopts -strict -2 -y $af || break
     vbitrate=$(hkbr $length $af $fsize)
     echo -e "\n"
-    log "Calculated video bitrate: ${vbitrate}kbps"
+    log "Calculated video bitrate: ${vbitrate}"
+    if [[ $force_bitrate != '.' ]]
+    then
+	vbitrate=$force_bitrate
+	log "Forced video bitrate: ${vbitrate}kbps"
+    fi
     log "Examining video"
     [[ -f ${of}-0.log ]] && ! ((force)) || 
 	$FFMPEG $iopts -i $f \

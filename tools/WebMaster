@@ -59,7 +59,7 @@ joinstr() {
     shift
     while [[ ! -z $2 ]]
     do
-	s="$s,$2"
+	s="${s}${sep}${2}"
 	shift
     done
     echo $s

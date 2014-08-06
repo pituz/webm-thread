@@ -28,6 +28,8 @@ Options:
     -n filename - output filename (.webm will be added)
     -F size     - result size, kilobytes
     -S filename - render subtitles (. to use subs from container)
+    -A value	- audio filters
+    -V value	- video filters
 Options of prior files will be used as defaults for next.
 END
     exit 1
@@ -70,9 +72,10 @@ while [[ ! -z $1 ]]
 do
     unset of
     vfilters=()
+    afilters=()
     vopts=()
     OPTIND=1
-    while getopts "9a:fbc:B:w:s:t:n:S:hF:p:" o
+    while getopts "9a:fbc:B:w:s:t:n:S:hF:p:A:V:" o
     do
         case $o in
 	    9)  vp9=1
@@ -109,6 +112,8 @@ do
 		;;
 	    S)  subs=$OPTARG;;
 	    F)  fsize=$OPTARG;;
+	    A)	custom_afilters=$OPTARG;;
+	    V)	custom_vfilters=$OPTARG;;
 	    h)  help
 		;;
             
@@ -124,6 +129,9 @@ do
     else
 	vopts=(-c:v libvpx -auto-alt-ref 1 -lag-in-frames 16)
     fi
+
+    vfilters=( $custom_vfilters )
+    afilters=( $custom_afilters )
 
     [[ $width != . ]] && vfilters+=("scale=${width}:trunc(${width}/dar/2)*2")
     if [[ ! -z $start ]]
@@ -159,6 +167,7 @@ do
     fi
     ((length)) || length=$(ffprobe $f 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')
     ((start)) && ((length = $(time_to_seconds $length) - $(time_to_seconds $start)))
+    ((${#afilters})) && aopts+=(-vf "$(joinstr , $afilters)")
     ((${#vfilters})) && vopts+=(-vf "$(joinstr , $vfilters)")
     (($best)) && opts+=(-quality best)
     log "Encoding audio"

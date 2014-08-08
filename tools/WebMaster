@@ -180,7 +180,7 @@ do
     if [[ $force_bitrate != '.' ]]
     then
 	vbitrate=$force_bitrate
-	log "Forced video bitrate: ${vbitrate}kbps"
+	log "Forced video bitrate: ${vbitrate}"
     fi
     log "Examining video"
     [[ -f ${of}-0.log ]] && ! ((force)) || 

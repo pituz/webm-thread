@@ -53,7 +53,7 @@ unset f
 
 [[ -z $1 ]] && help
 set -e
-source $(dirname $0)/.zshrc.avenc
+source "$(readlink "$(dirname $0"))/.zshrc.avenc"
 
 joinstr() {
     local sep=$1

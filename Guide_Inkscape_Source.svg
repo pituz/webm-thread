@@ -735,9 +735,9 @@
        style="font-size:30px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:120.00000477%;fill:#ff6600;font-family:Consolas;-inkscape-font-specification:Consolas Bold"
        id="flowPara5152">3.2. Проводим оценку сложности видео, данные о сложности записываются в файл ffmpeg2pass-0.log. Первым делом расчитаем битрейт видео по формуле <flowSpan
    style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:120.00000477%;fill:#b2cb17;fill-opacity:1;font-family:Consolas;-inkscape-font-specification:Consolas Bold"
-   id="flowSpan5196">vb</flowSpan>=(6144-av)*8/t, где <flowSpan
+   id="flowSpan5196">vb</flowSpan>=(13700-av)*8/t, где <flowSpan
    style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:120.00000477%;fill:#b2cb17;fill-opacity:1;font-family:Consolas;-inkscape-font-specification:Consolas Bold"
-   id="flowSpan5298">vb</flowSpan> - битрейт видео, 6144 - максимальный размер файла в килобайтах, av - размер аудиопотока из прошлого пункта, t - длина видео в секундах.</flowPara><flowPara
+   id="flowSpan5298">vb</flowSpan> - битрейт видео, 13700 - максимальный размер файла в килобайтах, av - размер аудиопотока из прошлого пункта, t - длина видео в секундах.</flowPara><flowPara
        style="font-size:30px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:120.00000477%;fill:#ff6600;font-family:Consolas;-inkscape-font-specification:Consolas Bold"
        id="flowPara5154">ffmpeg -i <flowSpan
    style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:120.00000477%;fill:#008000;font-family:Consolas;-inkscape-font-specification:Consolas Bold"

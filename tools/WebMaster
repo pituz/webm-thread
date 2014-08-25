@@ -165,8 +165,16 @@ do
         shift
         continue
     fi
-    ((length)) || length=$(ffprobe $f 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')
-    ((start)) && [[ -z $length ]] && ((length = $(time_to_seconds $length) - $(time_to_seconds $start))) || :
+    filelength="$(time_to_seconds "$(ffprobe $f 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')")"
+    if [[ -z $length ]]
+    then
+	if [[ -z $start ]]
+	then
+	    length=$filelength
+	else
+	    ((length = filelength-$(time_to_seconds $start)))
+	fi
+    fi
     ((${#afilters})) && aopts+=(-vf "$(joinstr , $afilters)")
     ((${#vfilters})) && vopts+=(-vf "$(joinstr , $vfilters)")
     (($best)) && opts+=(-quality best)

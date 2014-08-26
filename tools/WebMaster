@@ -9,6 +9,8 @@ Options:
     -9		- use VP9 video codec
     -s time	- start of needle fragment in source video
     -t length	- duration of fragment
+    -T time	- end of fragment (from beginning of file)
+	must be specified after -s
     -a value	- audio option:
 	0-9: libvorbis quality, default - 2
 	>=10: opus bitrate, kbit/s
@@ -75,7 +77,7 @@ do
     afilters=()
     vopts=()
     OPTIND=1
-    while getopts "9a:fbc:B:w:s:t:n:S:hF:p:A:V:" o
+    while getopts "9a:fbc:B:w:s:t:T:n:S:hF:p:A:V:" o
     do
         case $o in
 	    9)  vp9=1
@@ -94,12 +96,12 @@ do
                 ;;
             w)  width=$OPTARG
                 ;;
-            s)  start=$OPTARG
+	    s)  start=$(time_to_seconds $OPTARG)
                 ;;
-            t)  opts+=(-t $OPTARG)
-		aopts+=(-t $OPTARG)
-		length=$(time_to_seconds $OPTARG)
+            t)  length=$(time_to_seconds $OPTARG)
                 ;;
+	    T)  length=$(($(time_to_seconds $OPTARG) - start))
+		;;
             b)  best=1
                 ;;
 	    c)	crf=$OPTARG
@@ -172,9 +174,10 @@ do
 	then
 	    length=$filelength
 	else
-	    ((length = filelength-$(time_to_seconds $start)))
+	    ((length = filelength - start))
 	fi
     fi
+    opts=+(-t $length)
     ((${#afilters})) && aopts+=(-vf "$(joinstr , $afilters)")
     ((${#vfilters})) && vopts+=(-vf "$(joinstr , $vfilters)")
     (($best)) && opts+=(-quality best)
@@ -214,7 +217,7 @@ do
 	    echo "[SKIP] -p $preview: option not implemented yet"
 	else
 	    ipreview=(-ss $preview -i $of)
-	    $FFMPEG $ipreview -b:v 5M -crf 20 -vframes 1 -af volume=0 $aopts -strict -2 $of.1stframe.webm
+	    $FFMPEG $ipreview -b:v 5M -crf 20 -vframes 1 -af volume=0 $vopts $aopts -strict -2 $of.1stframe.webm
 	#fi
 	    mkvmerge $of.1stframe.webm + $of -o $of.pr.webm || :
 	    [ -f $of.pr.webm ] && mv $of.pr.webm $of && rm $of.1stframe.webm

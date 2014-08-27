@@ -43,7 +43,7 @@ log() {
 width=400
 fsize=6144
 best=0
-aopts=(-q:a 2)
+audio=2
 force=0
 crf=16
 force_bitrate=.
@@ -76,21 +76,15 @@ do
     vfilters=()
     afilters=()
     vopts=()
+    aopts=()
+    opts=()
     OPTIND=1
     while getopts "9a:fbc:B:w:s:t:T:n:S:hF:p:A:V:" o
     do
         case $o in
 	    9)  vp9=1
 		;;
-	    a)  if [[ $OPTARG == "." ]]
-		    then aopts=(-c:a copy)
-		elif (($OPTARG >= 10))
-		    then aopts=(-c:a libopus -b:a "${OPTARG}k")
-		elif [[ $OPTARG == "n" ]]
-		    then aopts=(-an)
-		else
-		    aopts=(-q:a $OPTARG)
-		fi
+	    a)  audio=$OPTARG
                 ;;
             f)  force=1
                 ;;
@@ -130,6 +124,15 @@ do
 	vopts+=(-c:v libvpx-vp9 -strict -2 -auto-alt-ref 1 -lag-in-frames 25)
     else
 	vopts=(-c:v libvpx -auto-alt-ref 1 -lag-in-frames 16)
+    fi
+    if [[ $audio == "." ]]
+	then aopts=(-c:a copy)
+    elif (($OPTARG >= 10))
+	then aopts=(-c:a libopus -b:a "${OPTARG}k")
+    elif [[ $OPTARG == "n" ]]
+	then aopts=(-an)
+    else
+	aopts=(-q:a $OPTARG)
     fi
 
     vfilters=( $custom_vfilters )
@@ -177,15 +180,20 @@ do
 	    ((length = filelength - start))
 	fi
     fi
-    opts=+(-t $length)
+    opts+=(-t $length)
     ((${#afilters})) && aopts+=(-vf "$(joinstr , $afilters)")
     ((${#vfilters})) && vopts+=(-vf "$(joinstr , $vfilters)")
     (($best)) && opts+=(-quality best)
-    log "Encoding audio"
-    [[ -f $af ]] && ! ((force)) ||
-	$FFMPEG $iopts -i $f \
-	    -vn -map 0:a:0 $opts $aopts -strict -2 -y $af || break
-    vbitrate=$(hkbr $length $af $fsize)
+    if [[ $audio == "n" ]]
+    then
+	vbitrate=$(hkbr $length 0 $fsize)
+    else
+	log "Encoding audio"
+	[[ -f $af ]] && ! ((force)) ||
+	    $FFMPEG $iopts -i $f \
+		-vn -map 0:a:0 $opts $aopts -strict -2 -y $af || break
+	vbitrate=$(hkbr $length $af $fsize)
+    fi
     echo -e "\n"
     log "Calculated video bitrate: ${vbitrate}"
     if [[ $force_bitrate != '.' ]]
@@ -207,8 +215,13 @@ do
 	    -pass 2 -passlogfile $of -y $vf || break
     #ffmpeg -i $vf -i $af -map 0:v -map 1:a -c copy -strict -2 -y $of
     echo -e "\n"
-    mkvmerge $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
-					     # so checking for result existence instead
+    if [[ $audio == "n" ]]
+    then
+	mv $vf $of
+    else
+	mkvmerge $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
+						 # so checking for result existence instead
+    fi
     if [[ ! -z $preview ]]
     then
 	pf="${of%.webm}-p.webm"

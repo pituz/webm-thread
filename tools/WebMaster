@@ -69,51 +69,37 @@ joinstr() {
     echo $s
 }
 
-iopts=()
 while [[ ! -z $1 ]]
 do
     unset of
     vfilters=()
     afilters=()
-    vopts=()
-    aopts=()
-    opts=()
+    iopts=()  # ffmpeg input options
+    vopts=()  # video output options
+    aopts=()  # audio output options
+    opts=()  # general output options
     OPTIND=1
     while getopts "9a:fbc:B:w:s:t:T:n:S:hF:p:A:V:" o
     do
         case $o in
-	    9)  vp9=1
-		;;
-	    a)  audio=$OPTARG
-                ;;
-            f)  force=1
-                ;;
-            w)  width=$OPTARG
-                ;;
-	    s)  start=$(time_to_seconds $OPTARG)
-                ;;
-            t)  length=$(time_to_seconds $OPTARG)
-                ;;
-	    T)  length=$(($(time_to_seconds $OPTARG) - start))
-		;;
-            b)  best=1
-                ;;
-	    c)	crf=$OPTARG
-		;;
-	    B)	force_bitrate=$OPTARG
-		;;
-	    p)	preview=$OPTARG
-		;;
-	    n)  of="${OPTARG%.webm}.webm"
-		;;
+	    9)  vp9=1;;
+	    a)  audio=$OPTARG;;
+            f)  force=1;;
+            w)  width=$OPTARG;;
+	    s)  start=$(time_to_seconds $OPTARG);;
+            t)  length=$(time_to_seconds $OPTARG);;
+	    T)  length=$(($(time_to_seconds $OPTARG) - start));;
+            b)  best=1;;
+	    c)	crf=$OPTARG;;
+	    B)	force_bitrate=$OPTARG;;
+	    p)	preview=$OPTARG;;
+	    n)  of="${OPTARG%.webm}.webm";;
 	    S)  subs=$OPTARG;;
 	    F)  fsize=$OPTARG;;
 	    A)	custom_afilters=$OPTARG;;
 	    V)	custom_vfilters=$OPTARG;;
-	    h)  help
-		;;
-            
-        esac
+	    h)  help;;
+	esac
     done
     shift $((OPTIND - 1))
     [[ $1 == . ]] || f=$1

@@ -5,7 +5,7 @@
 Тред техподдержки (в оп-посте устаревшая хуита): http://2ch.hk/s/res/978430.html
 Обсуждение припадочных модераторов: http://2ch.hk/d/res/148930.html
 Филиал треда с большими WebM'ками (до 20МБ): http://2ch.hk/f/res/22235.html
-Если браузер вместо воспроизведения отдельных видео ругается на повреждённый видеофайл, либо не воспроизводит звук — он скорее всего не может в VP9 или Opus. См. http://en.wikipedia.org/wiki/HTML5_Audio#Supported_audio_codecs.
+Если браузер вместо воспроизведения отдельных видео ругается на повреждённый видеофайл, либо не воспроизводит звук — он скорее всего не может в VP9 или Opus. См. http://en.wikipedia.org/wiki/HTML5_Audio#Supported_audio_codecs
 Хромоги с зондом 36 версии, а также пользователи браузеров на его движке сосут на вебмках с Opus'ом, смуксенных при помощи mkvmerge.
 Для поиска соуса видео сохраняем кадр (правый клик по видео) и ищем его на http://images.google.com.
 **О кодировании WebM**
@@ -19,8 +19,6 @@ Opus'у наоборот указывать битрейт необходимо.
 **Внимание:** параметр -ss ffmpeg'а следует указывать после входного файла, иначе тайминг субтитров будет считаться от начала фрагмента.
 В git-версии фильтр subtitles ffmpeg'а научился брать шрифты из контейнера и понимать параметр si (номер нужного потока с субтитрами).
 **Ссылки**
-Программы и их документация: http://ffmpeg.org, http://mpv.io, http://www.bunkus.org/videotools/mkvtoolnix/.
-Гуй с минимумом кнопок для ретардов (сперма-only): https://github.com/WebMBro/WebMConverter/releases.
-Исходники для op-webm'а (скрипт на zsh и пикчи): https://github.com/pituz/webm-thread/tree/master/overlay
-Исходник пикчегайда: 
-Текст поста: https://github.com/pituz/webm-thread/blob/master/op-paste
+Программы и их документация: http://ffmpeg.org http://mpv.io http://www.bunkus.org/videotools/mkvtoolnix/
+Гуй с минимумом кнопок для ретардов (сперма-only): https://github.com/WebMBro/WebMConverter/releases
+Оп-паста, исходники пикчегайда и оп-webm'а, скрипт пиления webm'ок на zsh: https://github.com/pituz/webm-thread/

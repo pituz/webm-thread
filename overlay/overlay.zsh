@@ -13,7 +13,7 @@ shift $((OPTIND-1))
 [[ -z $length ]] && length=$(ffprobe $1 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')
 for pass in 1 2
     ffmpeg -hide_banner $iargs -i $1 \
-        -i thread-tv-clean-19_33-571:350.png \
+        -i thread-tv-clean-19_33-571_350.png \
         $oargs \
         -filter_complex '
             [0:v] scale=-1:317 [v0],

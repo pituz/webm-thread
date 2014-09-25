@@ -19,6 +19,7 @@ Opus'у наоборот указывать битрейт необходимо.
 **Внимание:** параметр -ss ffmpeg'а следует указывать после входного файла, иначе тайминг субтитров будет считаться от начала фрагмента.
 В git-версии фильтр subtitles ffmpeg'а научился брать шрифты из контейнера и понимать параметр si (номер нужного потока с субтитрами).
 **Ссылки**
+Основные понятия сжатия видео: https://github.com/pituz/webm-thread/wiki/glossary
 Программы и их документация: http://ffmpeg.org http://mpv.io http://www.bunkus.org/videotools/mkvtoolnix/
 Гуй с минимумом кнопок для ретардов (сперма-only): https://github.com/WebMBro/WebMConverter/releases
 Оп-паста, исходники пикчегайда и оп-webm'а, скрипт пиления webm'ок на zsh: https://github.com/pituz/webm-thread/

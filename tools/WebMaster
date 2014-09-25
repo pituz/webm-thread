@@ -113,12 +113,12 @@ do
     fi
     if [[ $audio == "." ]]
 	then aopts=(-c:a copy)
-    elif (($OPTARG >= 10))
-	then aopts=(-c:a libopus -b:a "${OPTARG}k")
-    elif [[ $OPTARG == "n" ]]
+    elif (($audio >= 10))
+	then aopts=(-c:a libopus -b:a "${audio}k")
+    elif [[ $audio == "n" ]]
 	then aopts=(-an)
     else
-	aopts=(-q:a $OPTARG)
+	aopts=(-q:a $audio)
     fi
 
     vfilters=( $custom_vfilters )

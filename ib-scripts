@@ -1,10 +1,10 @@
 Скрипты для репорта пидораторов в /d/ (вставлять в адресную строку браузера, можно запилить в закладки):
 
-Кол-во удалённых постов на странице: `javascript:(alert($('.de-post-deleted').length))()`
-Заполнить страницу постами: `javascript:($('.post').css('display','inline'))()`
-Вернуть: `javascript:($('.post').css('display','table'))()`
-Скрыть все посты кроме удалённых: `javascript:($('.reply').hide(); $('.de-post-deleted').parent.show())()`
-Вернуть: `javascript:($('.reply').show())()`
-Отмечать красным посты по клику даты: `javascript:($('.posttime').click(function(event) {$(this).parent().css('border-color','red')}))()`
+Кол-во удалённых постов на странице: javascript:(alert($('.de-post-deleted').length))()
+Заполнить страницу постами: javascript:($('.post').css('display','inline'))()
+Вернуть: javascript:($('.post').css('display','table'))()
+Скрыть все посты кроме удалённых: `javascript:($('.reply').hide(); $('.de-post-deleted').parent.show())()
+Вернуть: javascript:($('.reply').show())()
+Отмечать красным посты по клику даты: javascript:($('.posttime').click(function(event) {$(this).parent().css('border-color','red')}))()
 
 Требуется наличие куклоскрипта.

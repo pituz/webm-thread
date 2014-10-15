@@ -20,7 +20,8 @@ Options:
 	(othervise conversion with existing results will be skipped)
     -w width	- scale destination video to given width (default: 400)
 	. - don't scale
-    -b		- use "best" VP8 quality setting
+    -b		- use "best" VP8/VP9 quality setting
+    -C value	- cpu-used VP8/VP9 setting (quality: 0..4, 0 - better, default: 1)
     -c crf	- specify constant rate factor (default: 16)
     -B bitrate  - specify video bitrate, bps (suffixes: k, m, g)
 	.: calculate bitrate from file size (default)
@@ -46,6 +47,7 @@ best=0
 audio=2
 force=0
 crf=16
+cpuused=1
 force_bitrate=.
 [ $FFMPEG ] || FFMPEG=(ffmpeg -hide_banner -v warning -stats)
 
@@ -79,7 +81,7 @@ do
     aopts=()  # audio output options
     opts=()  # general output options
     OPTIND=1
-    while getopts "9a:fbc:B:w:s:t:T:n:S:hF:p:A:V:" o
+    while getopts "9a:fbC:c:B:w:s:t:T:n:S:hF:p:A:V:" o
     do
         case $o in
 	    9)  vp9=1;;
@@ -90,6 +92,7 @@ do
             t)  length=$(time_to_seconds $OPTARG);;
 	    T)  length=$(($(time_to_seconds $OPTARG) - start));;
             b)  best=1;;
+	    C)  cpuused=$OPTARG;;
 	    c)	crf=$OPTARG;;
 	    B)	force_bitrate=$OPTARG;;
 	    p)	preview=$OPTARG;;
@@ -190,14 +193,14 @@ do
     log "Examining video"
     [[ -f ${of}-0.log ]] && ! ((force)) || 
 	$FFMPEG $iopts -i $f \
-	    -an -map 0:v:0 $opts $vopts -pass 1 -passlogfile $of -f rawvideo -f null /dev/null || break
+	    -an -map 0:v:0 $opts $vopts -cpu-used $cpuused -pass 1 -passlogfile $of -f rawvideo -f null /dev/null || break
     echo
     echo -e "\n"
     log "Encoding video"
     [[ -f $vf ]] && ! ((force)) ||
 	$FFMPEG $iopts -i $f \
 	    -an -map 0:v:0 $opts $vopts \
-	    -b:v $vbitrate -crf $crf \
+	    -b:v $vbitrate -cpu-used $cpuused -crf $crf \
 	    -pass 2 -passlogfile $of -y $vf || break
     #ffmpeg -i $vf -i $af -map 0:v -map 1:a -c copy -strict -2 -y $of
     echo -e "\n"

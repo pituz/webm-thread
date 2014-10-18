@@ -41,10 +41,10 @@ log() {
     echo -e "[i] $@"
 }
 # defaults
-width=400
-fsize=6144
+width=.
+fsize=15360
 best=0
-audio=2
+audio=3
 force=0
 crf=16
 cpuused=1

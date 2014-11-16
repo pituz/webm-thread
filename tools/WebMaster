@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-programname=$(basename $0)
+programname=$0:t
 help() {
     cat >&1 <<END
 WebMaster — wishmaster for WebM encoding: magic button with additional controls
@@ -49,7 +49,7 @@ force=0
 crf=16
 cpuused=1
 force_bitrate=.
-[ $FFMPEG ] || FFMPEG=(ffmpeg -hide_banner -v warning -stats)
+[[ -n $FFMPEG ]] || FFMPEG=(ffmpeg -hide_banner -v warning -stats)
 
 # config file
 for f in $0.rc ~/.${programname}rc; [[ -f $f ]] && source  $f
@@ -57,19 +57,7 @@ unset f
 
 [[ -z $1 ]] && help
 set -e
-source "$(dirname "$(readlink -f $0)")/.zshrc.avenc"
-
-joinstr() {
-    local sep=$1
-    local s=$2
-    shift
-    while [[ ! -z $2 ]]
-    do
-	s="${s}${sep}${2}"
-	shift
-    done
-    echo $s
-}
+source "${0:A:h}/.zshrc.avenc"
 
 while [[ ! -z $1 ]]
 do
@@ -150,7 +138,7 @@ do
 	    vfilters+=(subtitles=$subs)
 	fi
     fi
-    [[ -z $of ]] && of="${$(basename $f)%.*}.webm"
+    [[ -z $of ]] && of="${f:t:r}.webm"  # strip path and extension
     [[ $of == $f ]] && of=${f/webm/converted.webm}
     af=${of/webm/audio.webm}
     vf=${of/webm/video.webm}
@@ -170,8 +158,8 @@ do
 	fi
     fi
     opts+=(-t $length)
-    ((${#afilters})) && aopts+=(-vf "$(joinstr , $afilters)")
-    ((${#vfilters})) && vopts+=(-vf "$(joinstr , $vfilters)")
+    ((${#afilters})) && aopts+=(-af ${(j:,:)afilters})
+    ((${#vfilters})) && vopts+=(-vf ${(j:,:)vfilters})
     (($best)) && opts+=(-quality best)
     if [[ $audio == "n" ]]
     then

@@ -15,7 +15,7 @@ hkbr() {
         cat <<END
 hkbr — video bitrate calculator
 Usage: hkbr time [audio] [result size]
-    time - length of fragment<F3>
+    time - length of fragment
     audio may be one of:
 	existing file: use file size
 	0-320: bitrate, kbit/s; default - 120k

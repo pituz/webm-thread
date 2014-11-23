@@ -196,7 +196,7 @@ do
     then
 	mv $vf $of
     else
-	mkvmerge $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
+	mkvmerge -q $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
 						 # so checking for result existence instead
     fi
     if [[ ! -z $preview ]]
@@ -209,7 +209,7 @@ do
 	    ipreview=(-ss $preview -i $of)
 	    $FFMPEG $ipreview -b:v 5M -crf 20 -vframes 1 -af volume=0 $vopts $aopts -strict -2 $of.1stframe.webm
 	#fi
-	    mkvmerge $of.1stframe.webm + $of -o $of.pr.webm || :
+	    mkvmerge -q $of.1stframe.webm + $of -o $of.pr.webm || :
 	    [ -f $of.pr.webm ] && mv $of.pr.webm $of && rm $of.1stframe.webm
 	fi
 	#$FFMPEG $ipreview -filter_complex 'anullsrc [a]' -map 0:v -map '[a]' -vframes 1 $aopts 

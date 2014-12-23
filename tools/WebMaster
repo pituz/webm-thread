@@ -43,10 +43,11 @@ log() {
 }
 # defaults
 width=.
-fsize=15360
+fsize=6144
 best=0
-audio=3
+audio=64
 force=0
+vp9=1
 crf=16
 cpuused=1
 force_bitrate=.

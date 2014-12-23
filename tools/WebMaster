@@ -164,6 +164,7 @@ do
     ((${#afilters})) && aopts+=(-af ${(j:,:)afilters})
     ((${#vfilters})) && vopts+=(-vf ${(j:,:)vfilters})
     (($best)) && opts+=(-quality best)
+    time_start=$SECONDS
     if [[ $audio == "n" ]]
     then
 	vbitrate=$(hkbr $length 0 $fsize)
@@ -181,12 +182,14 @@ do
 	vbitrate=$force_bitrate
 	log "Forced video bitrate: ${vbitrate}"
     fi
+    time_start1pass=$SECONDS
     log "Examining video"
     [[ -f ${of}-0.log ]] && ! ((force)) || 
 	$FFMPEG $iopts -i $f \
 	    -an -map 0:v:0 $opts $vopts -cpu-used $cpuused -pass 1 -passlogfile $of -f rawvideo -f null /dev/null || break
     echo
     echo -e "\n"
+    time_start2pass=$SECONDS
     log "Encoding video"
     [[ -f $vf ]] && ! ((force)) ||
 	$FFMPEG $iopts -i $f \
@@ -218,7 +221,9 @@ do
 	#$FFMPEG $ipreview -filter_complex 'anullsrc [a]' -map 0:v -map '[a]' -vframes 1 $aopts 
     fi
     ofsize="$(stat -c %s $of)"  # result file size
-    log "$of encoded. Size: $((ofsize/1024))"
+    log "$of encoded. Size: $((ofsize/1024))KB, time (total/audio/1pass/2pass): $((
+	SECONDS - time_start))/$((time_start1pass - time_start))/$((
+	time_start2pass - time_start1pass))/$((SECONDS - time_start2pass))s"
     if ((ofsize > fsize * 1024))
     then
 	log "$of is too big, leaving temporary files"

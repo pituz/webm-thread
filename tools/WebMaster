@@ -6,6 +6,7 @@ WebMaster — wishmaster for WebM encoding: magic button with additional control
 Usage: $programname [file1 options] file1 [[file2 options] file2] ...
 Options:
     .		- use last specified file
+    -8		- use VP8 video codec
     -9		- use VP9 video codec
     -s time	- start of needle fragment in source video
     -t length	- duration of fragment
@@ -69,9 +70,10 @@ do
     aopts=()  # audio output options
     opts=()  # general output options
     OPTIND=1
-    while getopts "9a:fbC:c:B:w:s:t:T:n:S:hF:p:A:V:" o
+    while getopts "89a:fbC:c:B:w:s:t:T:n:S:hF:p:A:V:" o
     do
         case $o in
+	    8)  vp9=0;;
 	    9)  vp9=1;;
 	    a)  audio=$OPTARG;;
             f)  force=1;;

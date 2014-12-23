@@ -89,7 +89,7 @@ do
 	    F)  fsize=$OPTARG;;
 	    A)	custom_afilters=$OPTARG;;
 	    V)	custom_vfilters=$OPTARG;;
-	    h)  help;;
+	    h|?)  help;;
 	esac
     done
     shift $((OPTIND - 1))

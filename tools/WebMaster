@@ -7,14 +7,14 @@ Usage: $programname [file1 options] file1 [[file2 options] file2] ...
 Options:
     .		- use last specified file
     -8		- use VP8 video codec
-    -9		- use VP9 video codec
+    -9		- use VP9 video codec (default)
     -s time	- start of needle fragment in source video
     -t length	- duration of fragment
     -T time	- end of fragment (from beginning of file)
 	must be specified after -s
     -a value	- audio option:
-	0-9: libvorbis quality, default - 2
-	>=10: opus bitrate, kbit/s
+	0-9: libvorbis quality
+	>=10: opus bitrate, kbit/s (default: 64)
 	.: copy audio
 	n: disable audio
     -f		- owerwrite files
@@ -30,7 +30,7 @@ Options:
 	existing file - picture (not implemented yet)
 	time - copy frame of video
     -n filename - output filename (.webm will be added)
-    -F size     - result size, kilobytes
+    -F size     - result size, kilobytes (default: 6144)
     -S filename - render subtitles (. to use subs from container)
     -A value	- audio filters
     -V value	- video filters

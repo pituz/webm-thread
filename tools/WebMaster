@@ -19,8 +19,8 @@ Options:
 	n: disable audio
     -f		- owerwrite files
 	(othervise conversion with existing results will be skipped)
-    -w width	- scale destination video to given width (default: 400)
-	. - don't scale
+    -w width	- scale destination video to given width
+	. - don't scale (default)
     -b		- use "best" VP8/VP9 quality setting
     -C value	- cpu-used VP8/VP9 setting (quality: 0..4, 0 - better, default: 1)
     -c crf	- specify constant rate factor (default: 16)

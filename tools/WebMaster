@@ -24,6 +24,8 @@ Options:
     -b		- use "best" VP8/VP9 quality setting
     -C value	- cpu-used VP8/VP9 setting (quality: 0..4, 0 - better, default: 1)
     -c crf	- specify constant rate factor (default: 16)
+    -m qp	- miniumal quantizer scale, qmin (default: 8)
+    -M qp	- qmax (default: 60)
     -B bitrate  - specify video bitrate, bps (suffixes: k, m, g)
 	.: calculate bitrate from file size (default)
     -p value	- add preview:
@@ -50,6 +52,8 @@ force=0
 vp9=1
 crf=16
 cpuused=1
+qmin=8
+qmax=60
 force_bitrate=.
 [[ -n $FFMPEG ]] || FFMPEG=(ffmpeg -hide_banner -v warning -stats)
 
@@ -71,7 +75,7 @@ do
     aopts=()  # audio output options
     opts=()  # general output options
     OPTIND=1
-    while getopts "89a:fbC:c:B:w:s:t:T:n:S:hF:p:A:V:" o
+    while getopts "89a:fbC:c:m:M:B:w:s:t:T:n:S:hF:p:A:V:" o
     do
         case $o in
 	    8)  vp9=0;;
@@ -85,6 +89,8 @@ do
             b)  best=1;;
 	    C)  cpuused=$OPTARG;;
 	    c)	crf=$OPTARG;;
+	    m)  qmin=$OPTARG;;
+	    M)  qmax=$OPTARG;;
 	    B)	force_bitrate=$OPTARG;;
 	    p)	preview=$OPTARG;;
 	    n)  of="${OPTARG%.webm}.webm";;
@@ -194,7 +200,7 @@ do
     [[ -f $vf ]] && ! ((force)) ||
 	$FFMPEG $iopts -i $f \
 	    -an -map 0:v:0 $opts $vopts \
-	    -b:v $vbitrate -cpu-used $cpuused -crf $crf \
+	    -b:v $vbitrate -cpu-used $cpuused -crf $crf -qmin $qmin -qmax $qmax \
 	    -pass 2 -passlogfile $of -y $vf || break
     #ffmpeg -i $vf -i $af -map 0:v -map 1:a -c copy -strict -2 -y $of
     echo -e "\n"

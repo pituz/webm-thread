@@ -121,9 +121,8 @@ do
 	aopts=(-q:a $audio)
     fi
 
-    vfilters=( $custom_vfilters )
-    afilters=( $custom_afilters )
-
+    vfilters=( )
+    afilters=( )
     [[ $width != . ]] && vfilters+=("scale=${width}:trunc(${width}/dar/2)*2")
     if [[ ! -z $start ]]
     then
@@ -147,6 +146,8 @@ do
 	    vfilters+=(subtitles=$subs)
 	fi
     fi
+    vfilters+=( $custom_vfilters )
+    afilters+=( $custom_afilters )
     [[ -z $of ]] && of="${f:t:r}.webm"  # strip path and extension
     [[ $of == $f ]] && of=${f/webm/converted.webm}
     af=${of/webm/audio.webm}

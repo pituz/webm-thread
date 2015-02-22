@@ -15,26 +15,30 @@
 — libvorbis'у нельзя указывать фиксированный битрейт (-b:a) — это портит качество звука. Opus'у наоборот указывать битрейт необходимо;
 — в webm'ки не стоит включать софтсаб в формате webvtt (ffmpeg это делает по умолчанию при наличии сабов в контейнере): во-первых, это бесполезно (для его отображения на странице должен быть специальный код), а во-вторых, от этого ролики не воспроизводятся в firefox;
 — ролики с opus'ом в firefox зацикливаются не с начала, а с последнего ключевого кадра;
-— mkvmerge упаковывает дорожки где-то на 1-2% эффективнее ffmpeg'а.
+— mkvmerge упаковывает дорожки где-то на 1-2% эффективнее ffmpeg'а;
+- порядок аргументов ffmpeg'а имеет значение, подробнее по ссылке ниже.
 
 **Кодирование**
 Быстро и просто, с удовлетворительным качеством и без подгонки по размеру:
-ffmpeg -i input.mkv -qmax 30 -sn out.webm
+ ffmpeg -i input.mkv -qmax 30 -sn out.webm
+параметром qmax регулируется качество: чем меньше — тем лучше картинка и больше файл.
 То же самое с современными кодеками (результат будет занимать в полтора-два раза меньше):
-ffmpeg -i input.mkv -c:v vp9 -qmax 30 -c:a libopus -b:a 64k out.webm
+ ffmpeg -i input.mkv **-c:v vp9** -qmax 30 **-c:a libopus** -b:a 64k out.webm
 Для получения максимального качества и подгонки по размеру нужно делать два прохода и считать битрейт, формула есть в пикчегайде.
 
 **Обрезка по времени**
-ffmpeg -ss начало -i input.mkv -t длительность out.webm
+ ffmpeg **-ss начало** -i input.mkv **-t длительность** out.webm
+ ffmpeg -i input.mkv **-ss начало** **-to конец** out.webm (дольше, т.к. файл будет декодироваться с начала, а не с нужной позиции)
+время указывается либо числом секунд, либо в формате чч:мм:сс.
 
 **Масштабирование**
-ffmpeg -i input.mkv -vf scale=ширина:-1 out.webm
+ ffmpeg -i input.mkv **-vf scale=ширина:-1** out.webm
 
 **Наложение субтитров**
-ffmpeg -i input.mkv -vf subtitles=input.mkv out.webm
-ffmpeg -i input.mkv -vf ass=input.ass out.webm
+ ffmpeg -i input.mkv **-vf subtitles=input.mkv** out.webm
+ ffmpeg -i input.mkv **-vf ass=input.ass** out.webm
 В параметрах фильтров (-vf) символы :, \, [, ], и , имеют специальное значение, их нужно экранировать установкой перед ними символа «\».
-Данная операция требует настройки кэша шрифтов в ОС Windows: https://github.com/pituz/webm-thread/wiki/fontconfig-on-windows
+В ОС Windows данная операция требует настройки библиотеки fontconfig: https://github.com/pituz/webm-thread/wiki/fontconfig-on-windows
 **Внимание:** параметр -ss ffmpeg'а следует указывать после входного файла, иначе тайминг субтитров будет считаться от начала фрагмента.
 
 Ещё: https://github.com/pituz/webm-thread/wiki/ffmpeg

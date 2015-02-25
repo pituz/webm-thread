@@ -1,0 +1,67 @@
+#!/usr/bin/env zsh
+set -e
+programname=$0:t
+source "${0:A:h}/.zshrc.avenc"
+die() {
+    echo $@ >&2
+    exit 1
+}
+help() {
+    cat<<EOF
+Usage: $programname [options] source.mkv fragment.webm
+Options:
+    -o          - force libopus audio codec (currently default, autodetection planned)
+    -v          - force libvorbis audio codec (not implemented yet)
+    -s time	- start of needle fragment in source
+    -F size     - result size limit, KiB (default: 6144)
+    -f size     - acceptable size skew, KiB (default: 128)
+EOF
+    exit 1
+}
+((size_limit=6144*1024))
+((max_size_skew=128*1024))
+((max_audio_bitrate=160*1024))
+max_tries=10
+
+while getopts "ovs:F:f:" o
+do
+    case $o in
+        s) audio_start=$OPTARG;;
+        F) size_limit=$((OPTARG * 1024));;
+        f) max_size_skew=$((OPTARG * 1024));;
+        *) help;;
+    esac
+done
+shift $((OPTIND - 1))
+audio_src=$1; video_src=$2
+[[ -f $audio_src ]] && [[ -f $video_src ]] || help
+dst_name="${video_src:t:r}-v2"
+audio_file="${dst_name}-a.webm"
+dst_file="$dst_name.webm"
+duration="$(time_to_seconds "$(ffprobe $video_src 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')")"
+video_size=$(( $(ffmpeg -hide_banner -v error -i $video_src -an -c copy -f matroska - | wc -c) ))
+result_size=0
+((audio_bitrate = (size_limit - video_size) * 8 / duration))
+try=1;
+printf "Limit: %d KiB; video size: %d KiB; space for audio: %d KiB; duration: %d seconds; bitrate: %.2f kbps\n" \
+    $((size_limit/1024)) $((video_size/1024)) $(((size_limit - video_size) / 1024)) $duration $((audio_bitrate / 1024))
+((audio_bitrate < 0)) && die "Impossiburu: no space for audio"
+
+while ((result_size > size_limit)) || ((result_size + max_size_skew < size_limit))
+do
+    ((try > max_tries)) && die "Too many failures, aborting."
+    ((result_size)) && ((audio_bitrate += (size_limit - result_size) * 8 / duration ))
+
+    ((audio_bitrate > max_audio_bitrate)) && audio_bitrate=$max_audio_bitrate
+
+    printf "Try %d of %d: bitrate %.2f kbps\n" \
+        $((try++)) $max_tries $((audio_bitrate/1024.0)) 
+    ffmpeg -hide_banner -v error -stats -ss $audio_start -i $audio_src -map 0:a:0 -t $duration \
+        -c:a libopus -application audio -vbr on -b:a $audio_bitrate -y $audio_file
+    mkvmerge -q -A $video_src $audio_file -o $dst_file
+    result_size=$(( $(stat -c%s $dst_file) ))
+    ((size_skew = size_limit - result_size ))
+    printf "Result size: %d KiB (%d KiB to limit)\n" \
+        $((result_size / 1024)) $((size_skew / 1024))
+done
+rm $audio_file

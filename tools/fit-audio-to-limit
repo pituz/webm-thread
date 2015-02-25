@@ -63,5 +63,7 @@ do
     ((size_skew = size_limit - result_size ))
     printf "Result size: %d KiB (%d KiB to limit)\n" \
         $((result_size / 1024)) $((size_skew / 1024))
+
+    ((audio_bitrate == max_audio_bitrate)) && break
 done
 rm $audio_file

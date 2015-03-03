@@ -18,6 +18,7 @@ Options:
 EOF
     exit 1
 }
+audio_start=0
 ((size_limit=6144*1024))
 ((max_size_skew=128*1024))
 ((max_audio_bitrate=160*1024))

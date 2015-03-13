@@ -15,20 +15,23 @@ Options:
     -s time	- start of needle fragment in source
     -F size     - result size limit, KiB (default: 6144)
     -f size     - acceptable size skew, KiB (default: 128)
+    -A value    - audio filters
 EOF
     exit 1
 }
+audio_start=0
 ((size_limit=6144*1024))
 ((max_size_skew=128*1024))
 ((max_audio_bitrate=160*1024))
 max_tries=10
 
-while getopts "ovs:F:f:" o
+while getopts "ovs:F:f:A:" o
 do
     case $o in
         s) audio_start=$OPTARG;;
         F) size_limit=$((OPTARG * 1024));;
         f) max_size_skew=$((OPTARG * 1024));;
+        A) audio_filters=$OPTARG;;
         *) help;;
     esac
 done
@@ -57,11 +60,14 @@ do
     printf "Try %d of %d: bitrate %.2f kbps\n" \
         $((try++)) $max_tries $((audio_bitrate/1024.0)) 
     ffmpeg -hide_banner -v error -stats -ss $audio_start -i $audio_src -map 0:a:0 -t $duration \
+        ${audio_filters:+-af} $audio_filters \
         -c:a libopus -application audio -vbr on -b:a $audio_bitrate -y $audio_file
     mkvmerge -q -A $video_src $audio_file -o $dst_file
     result_size=$(( $(stat -c%s $dst_file) ))
     ((size_skew = size_limit - result_size ))
     printf "Result size: %d KiB (%d KiB to limit)\n" \
         $((result_size / 1024)) $((size_skew / 1024))
+
+    ((audio_bitrate == max_audio_bitrate)) && break
 done
 rm $audio_file

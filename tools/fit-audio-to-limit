@@ -75,8 +75,8 @@ do
     mkvmerge -q -A $video_src $audio_file -o $dst_file
     result_size=$(( $(stat -c%s $dst_file) ))
     ((size_skew = size_limit - result_size ))
-    printf "Result size: %d KiB (%d KiB to limit)\n" \
-        $((result_size / 1024)) $((size_skew / 1024))
+    printf "Result size: %.3f KiB (%.3f KiB to limit)\n" \
+        $((result_size / 1024.0)) $((size_skew / 1024.0))
 
     ((audio_bitrate == max_audio_bitrate)) && break
 done

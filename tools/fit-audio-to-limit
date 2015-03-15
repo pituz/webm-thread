@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 set -e
+zmodload zsh/mathfunc
 programname=$0:t
 die() {
     echo $@ >&2
@@ -27,6 +28,7 @@ audio_start=0
 ((max_size_skew=128*1024))
 ((max_audio_bitrate=160*1024))
 max_tries=10
+min_bitrate_diff=100  # bps
 
 while getopts "ovs:F:f:A:" o
 do
@@ -56,8 +58,13 @@ printf "Limit: %d KiB; video size: %d KiB; space for audio: %d KiB; duration: %d
 while ((result_size > size_limit)) || ((result_size + max_size_skew < size_limit))
 do
     ((try > max_tries)) && die "Too many failures, aborting."
-    ((result_size)) && ((audio_bitrate += (size_limit - result_size) * 8 / duration ))
-
+    if ((result_size))
+    then 
+        ((bitrate_diff = size_skew * 8 / duration ))
+        ((abs(bitrate_diff) < min_bitrate_diff)) &&
+            ((bitrate_diff = size_skew / abs(size_skew) * min_bitrate_diff))
+        ((audio_bitrate += bitrate_diff))
+    fi
     ((audio_bitrate > max_audio_bitrate)) && audio_bitrate=$max_audio_bitrate
 
     printf "Try %d of %d: bitrate %.2f kbps\n" \

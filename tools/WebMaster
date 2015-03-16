@@ -83,8 +83,8 @@ do
 	    a)  audio=$OPTARG;;
             f)  force=1;;
             w)  width=$OPTARG;;
-	    s)  start=$(time_to_seconds $OPTARG);;
-            t)  length=$(time_to_seconds $OPTARG);;
+            s)  time_to_seconds $OPTARG start;;
+            t)  time_to_seconds $OPTARG length;;
 	    T)  length=$(($(time_to_seconds $OPTARG) - start));;
             b)  best=1;;
 	    C)  cpuused=$OPTARG;;
@@ -157,7 +157,7 @@ do
         shift
         continue
     fi
-    filelength="$(time_to_seconds "$(ffprobe $f 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')")"
+    time_to_seconds "$(ffprobe $f 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')" filelength
     if [[ -z $length ]]
     then
 	if [[ -z $start ]]

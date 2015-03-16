@@ -63,7 +63,6 @@ unset f
 
 [[ -z $1 ]] && help
 set -e
-source "${0:A:h}/.zshrc.avenc"
 
 while [[ ! -z $1 ]]
 do
@@ -174,13 +173,13 @@ do
     time_start=$SECONDS
     if [[ $audio == "n" ]]
     then
-	vbitrate=$(hkbr $length 0 $fsize)
+        ((vbitrate = fsize * 8 / length))
     else
 	log "Encoding audio"
 	[[ -f $af ]] && ! ((force)) ||
 	    $FFMPEG $iopts -i $f \
 		-vn -map 0:a:0 $opts $aopts -strict -2 -y $af || break
-	vbitrate=$(hkbr $length $af $fsize)
+	((vbitrate = (fsize - $(stat -c%s $af) / 1024) * 8 / length))
     fi
     echo -e "\n"
     log "Calculated video bitrate: ${vbitrate}"

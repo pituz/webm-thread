@@ -109,6 +109,16 @@ do
     [[ $1 == . ]] || f=$1
     [[ -z $f ]] && help
 
+    [[ -z $of ]] && of="${f:t:r}.webm"  # strip path and extension
+    [[ $of == $f ]] && of=${f/webm/converted.webm}
+    tmpdir="$of.tmp"
+    if ! ((force)) && [[ -f $of ]]
+    then
+        shift
+        continue
+    fi
+    mkdir -p $tmpdir
+
     if ((vp9))
     then
 	vopts+=(-c:v libvpx-vp9 -strict -2 -auto-alt-ref 1 -lag-in-frames 25)
@@ -136,11 +146,11 @@ do
     then
 	if [[ $subs == . ]]
 	then
-	    subs="$$.${f##*.}"
+	    subs="$tmpdir/subs.$f:e"
 	    ln -sf $f $subs
 	else
 	    subsfile=$subs
-	    subs="$$.${subs##*.}"
+	    subs="$tmpdir/subs.$subs:e"
 	    ln -sf $subsfile $subs
 	fi
 	if [[ $subs =~ ass$ ]]
@@ -152,15 +162,8 @@ do
     fi
     vfilters+=( $custom_vfilters )
     afilters+=( $custom_afilters )
-    [[ -z $of ]] && of="${f:t:r}.webm"  # strip path and extension
-    [[ $of == $f ]] && of=${f/webm/converted.webm}
-    af=${of/webm/audio.webm}
-    vf=${of/webm/video.webm}
-    if ! ((force)) && [[ -f $of ]]
-    then
-        shift
-        continue
-    fi
+    af="$tmpdir/audio.webm"
+    vf="$tmpdir/video.webm"
     time_to_seconds "$(ffprobe $f 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')" filelength
     if [[ -z $length ]]
     then
@@ -195,9 +198,9 @@ do
     fi
     time_start1pass=$SECONDS
     log "Examining video"
-    [[ -f ${of}-0.log ]] && ! ((force)) || 
+    [[ -f "$tmpdir/2pass-0.log" ]] && ! ((force)) || 
 	$FFMPEG $iopts -i $f \
-	    -an -map 0:v:0 $opts $vopts -cpu-used $cpuused -pass 1 -passlogfile $of -f rawvideo -f null /dev/null || break
+	    -an -map 0:v:0 $opts $vopts -cpu-used $cpuused -pass 1 -passlogfile "$tmpdir/2pass" -f rawvideo -f null /dev/null || break
     echo
     echo -e "\n"
     time_start2pass=$SECONDS
@@ -206,7 +209,7 @@ do
 	$FFMPEG $iopts -i $f \
 	    -an -map 0:v:0 $opts $vopts \
 	    -b:v $vbitrate -cpu-used $cpuused -crf $crf -qmin $qmin -qmax $qmax \
-	    -pass 2 -passlogfile $of -y $vf || break
+	    -pass 2 -passlogfile "$tmpdir/2pass" -y $vf || break
     #ffmpeg -i $vf -i $af -map 0:v -map 1:a -c copy -strict -2 -y $of
     echo -e "\n"
     if [[ $audio == "n" ]]
@@ -218,16 +221,16 @@ do
     fi
     if [[ ! -z $preview ]]
     then
-	pf="${of%.webm}-p.webm"
+	pf="$tmpdir/1stframe.webm"
 	if [[ -f $preview ]]
 	then ipreview=(-i $preview)
 	    echo "[SKIP] -p $preview: option not implemented yet"
 	else
 	    ipreview=(-ss $preview -i $of)
-	    $FFMPEG $ipreview -b:v 5M -crf 20 -vframes 1 -af volume=0 $vopts $aopts -strict -2 $of.1stframe.webm
+	    $FFMPEG $ipreview -b:v 5M -crf 20 -vframes 1 -af volume=0 $vopts $aopts -strict -2 $pf
 	#fi
-	    mkvmerge -q $of.1stframe.webm + $of -o $of.pr.webm || :
-	    [ -f $of.pr.webm ] && mv $of.pr.webm $of && rm $of.1stframe.webm
+	    mkvmerge -q $pf + $of -o $of.pr.webm || :
+	    [ -f $of.pr.webm ] && mv $of.pr.webm $of
 	fi
 	#$FFMPEG $ipreview -filter_complex 'anullsrc [a]' -map 0:v -map '[a]' -vframes 1 $aopts 
     fi
@@ -239,8 +242,7 @@ do
     then
 	log "$of is too big, leaving temporary files"
     else
-	rm $af $vf "$of-0.log"
+	rm -r $tmpdir
     fi
-    [[ subs =~  ^[0-9]\+\\..{3}$ ]] && [[ -h $subs ]] && rm $subs
     shift
 done

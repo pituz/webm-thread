@@ -48,6 +48,10 @@ time_to_seconds() {
     local result=$((match[3]*3600 + match[4]*60 + match[5]))
     [[ -n $2 ]] && (($2=result)) || echo $result
 }
+perform() {
+    echo $@
+    $@
+}
 # defaults
 width=.
 fsize=6144
@@ -185,7 +189,7 @@ do
     else
 	log "Encoding audio"
 	[[ -f $af ]] && ! ((force)) ||
-	    $FFMPEG $iopts -i $f \
+	    perform $FFMPEG $iopts -i $f \
 		-vn -map 0:a:0 $opts $aopts -strict -2 -y $af || break
 	((vbitrate = (fsize - $(stat -c%s $af) / 1024) * 8 / length))
     fi
@@ -199,14 +203,14 @@ do
     time_start1pass=$SECONDS
     log "Examining video"
     [[ -f "$tmpdir/2pass-0.log" ]] && ! ((force)) || 
-	$FFMPEG $iopts -i $f \
+	perform $FFMPEG $iopts -i $f \
 	    -an -map 0:v:0 $opts $vopts -cpu-used $cpuused -pass 1 -passlogfile "$tmpdir/2pass" -f rawvideo -f null /dev/null || break
     echo
     echo -e "\n"
     time_start2pass=$SECONDS
     log "Encoding video"
     [[ -f $vf ]] && ! ((force)) ||
-	$FFMPEG $iopts -i $f \
+	perform $FFMPEG $iopts -i $f \
 	    -an -map 0:v:0 $opts $vopts \
 	    -b:v ${vbitrate}K -cpu-used $cpuused -crf $crf -qmin $qmin -qmax $qmax \
 	    -pass 2 -passlogfile "$tmpdir/2pass" -y $vf || break
@@ -216,7 +220,7 @@ do
     then
 	mv $vf $of
     else
-	mkvmerge -q $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
+	perform mkvmerge -q $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
 						 # so checking for result existence instead
     fi
     if [[ ! -z $preview ]]
@@ -227,9 +231,9 @@ do
 	    echo "[SKIP] -p $preview: option not implemented yet"
 	else
 	    ipreview=(-ss $preview -i $of)
-	    $FFMPEG $ipreview -b:v 5M -crf 20 -vframes 1 -af volume=0 $vopts $aopts -strict -2 $pf
+	    perform $FFMPEG $ipreview -b:v 5M -crf 20 -vframes 1 -af volume=0 $vopts $aopts -strict -2 $pf
 	#fi
-	    mkvmerge -q $pf + $of -o $of.pr.webm || :
+	    perform mkvmerge -q $pf + $of -o $of.pr.webm || :
 	    [ -f $of.pr.webm ] && mv $of.pr.webm $of
 	fi
 	#$FFMPEG $ipreview -filter_complex 'anullsrc [a]' -map 0:v -map '[a]' -vframes 1 $aopts 

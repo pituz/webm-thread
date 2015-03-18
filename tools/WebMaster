@@ -182,11 +182,14 @@ do
     if [[ $audio == "n" ]]
     then
         ((vbitrate = fsize * 8 / length))
+        unset af
     else
-	log "Encoding audio"
-	[[ -f $af ]] && ! ((force)) ||
+	if [[ ! -f $af ]] || ((force))
+        then
+            log "Encoding audio"
 	    $FFMPEG $iopts -i $f \
-		-vn -map 0:a:0 $opts $aopts -strict -2 -y $af || break
+		-vn -map 0:a:0 $opts $aopts -strict -2 -y $af
+        fi
 	((vbitrate = (fsize - $(stat -c%s $af) / 1024) * 8 / length))
     fi
     echo -e "\n"
@@ -210,15 +213,10 @@ do
 	    -an -map 0:v:0 $opts $vopts \
 	    -b:v $vbitrate -cpu-used $cpuused -crf $crf -qmin $qmin -qmax $qmax \
 	    -pass 2 -passlogfile "$tmpdir/2pass" -y $vf || break
-    #ffmpeg -i $vf -i $af -map 0:v -map 1:a -c copy -strict -2 -y $of
+    #ffmpeg -i $vf ${af+-i} $af -c copy -strict -2 -y $of
     echo -e "\n"
-    if [[ $audio == "n" ]]
-    then
-	mv $vf $of
-    else
-	mkvmerge -q $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
+    mkvmerge -q $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
 						 # so checking for result existence instead
-    fi
     if [[ ! -z $preview ]]
     then
 	pf="$tmpdir/1stframe.webm"

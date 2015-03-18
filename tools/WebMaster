@@ -208,7 +208,7 @@ do
     [[ -f $vf ]] && ! ((force)) ||
 	$FFMPEG $iopts -i $f \
 	    -an -map 0:v:0 $opts $vopts \
-	    -b:v $vbitrate -cpu-used $cpuused -crf $crf -qmin $qmin -qmax $qmax \
+	    -b:v ${vbitrate}K -cpu-used $cpuused -crf $crf -qmin $qmin -qmax $qmax \
 	    -pass 2 -passlogfile "$tmpdir/2pass" -y $vf || break
     #ffmpeg -i $vf -i $af -map 0:v -map 1:a -c copy -strict -2 -y $of
     echo -e "\n"

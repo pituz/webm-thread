@@ -1,10 +1,15 @@
 #!/usr/bin/env zsh
 set -e
+zmodload zsh/mathfunc
 programname=$0:t
-source "${0:A:h}/.zshrc.avenc"
 die() {
     echo $@ >&2
     exit 1
+}
+time_to_seconds() {
+    [[ $1 =~ ^((([0-9]+):)?([0-9]+):)?([0-9.]+)$ ]]
+    local result=$((match[3]*3600 + match[4]*60 + match[5]))
+    [[ -n $2 ]] && (($2=result)) || echo $result
 }
 help() {
     cat<<EOF
@@ -24,6 +29,7 @@ audio_start=0
 ((max_size_skew=128*1024))
 ((max_audio_bitrate=160*1024))
 max_tries=10
+min_bitrate_diff=100  # bps
 
 while getopts "ovs:F:f:A:" o
 do
@@ -41,7 +47,7 @@ audio_src=$1; video_src=$2
 dst_name="${video_src:t:r}-v2"
 audio_file="${dst_name}-a.webm"
 dst_file="$dst_name.webm"
-duration="$(time_to_seconds "$(ffprobe $video_src 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')")"
+time_to_seconds "$(ffprobe $video_src 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')" duration
 video_size=$(( $(ffmpeg -hide_banner -v error -i $video_src -an -c copy -f matroska - | wc -c) ))
 result_size=0
 ((audio_bitrate = (size_limit - video_size) * 8 / duration))
@@ -53,8 +59,13 @@ printf "Limit: %d KiB; video size: %d KiB; space for audio: %d KiB; duration: %d
 while ((result_size > size_limit)) || ((result_size + max_size_skew < size_limit))
 do
     ((try > max_tries)) && die "Too many failures, aborting."
-    ((result_size)) && ((audio_bitrate += (size_limit - result_size) * 8 / duration ))
-
+    if ((result_size))
+    then 
+        ((bitrate_diff = size_skew * 8 / duration ))
+        ((abs(bitrate_diff) < min_bitrate_diff)) &&
+            ((bitrate_diff = size_skew / abs(size_skew) * min_bitrate_diff))
+        ((audio_bitrate += bitrate_diff))
+    fi
     ((audio_bitrate > max_audio_bitrate)) && audio_bitrate=$max_audio_bitrate
 
     printf "Try %d of %d: bitrate %.2f kbps\n" \
@@ -65,8 +76,8 @@ do
     mkvmerge -q -A $video_src $audio_file -o $dst_file
     result_size=$(( $(stat -c%s $dst_file) ))
     ((size_skew = size_limit - result_size ))
-    printf "Result size: %d KiB (%d KiB to limit)\n" \
-        $((result_size / 1024)) $((size_skew / 1024))
+    printf "Result size: %.3f KiB (%.3f KiB to limit)\n" \
+        $((result_size / 1024.0)) $((size_skew / 1024.0))
 
     ((audio_bitrate == max_audio_bitrate)) && break
 done

@@ -16,17 +16,17 @@
 — порядок аргументов ffmpeg'а имеет значение, подробнее по ссылке ниже.
 **Кодирование**
 Быстро и просто, с удовлетворительным качеством и без подгонки по размеру:
- ffmpeg -i input.mkv -qmax 30 -sn out.webm
+ ffmpeg -i input.mkv -qmax 30 -sn out.webm
 параметром qmax регулируется качество: чем меньше — тем лучше картинка и больше файл.
 То же самое с современными кодеками (результат будет занимать в полтора-два раза меньше):
- ffmpeg -i input.mkv **-c:v vp9** -qmax 30 **-c:a libopus** -b:a 64k out.webm
+ ffmpeg -i input.mkv **-c:v vp9** -qmax 30 **-c:a libopus** -b:a 64k out.webm
 Для получения максимального качества и подгонки по размеру нужно делать два прохода и считать битрейт, формула есть в пикчегайде.
 **Обрезка по времени**
- ffmpeg **-ss начало** -i input.mkv **-t длительность** out.webm
- ffmpeg -i input.mkv **-ss начало** **-to конец** out.webm (дольше, т.к. файл будет декодироваться с начала, а не с нужной позиции)
+ ffmpeg **-ss начало** -i input.mkv **-t длительность** out.webm
+ ffmpeg -i input.mkv **-ss начало** **-to конец** out.webm (дольше, т.к. файл будет декодироваться с начала, а не с нужной позиции)
 время указывается либо числом секунд, либо в формате чч:мм:сс.
 **Масштабирование**
- ffmpeg -i input.mkv **-vf scale=ширина:-1** out.webm
+ ffmpeg -i input.mkv **-vf scale=ширина:-1** out.webm
 Ещё: https://github.com/pituz/webm-thread/wiki/ffmpeg
 **Ссылки**
 Основные понятия сжатия видео: https://github.com/pituz/webm-thread/wiki/glossary

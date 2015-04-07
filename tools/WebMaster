@@ -181,7 +181,7 @@ do
     opts+=(-t $length)
     ((${#afilters})) && aopts+=(-af ${(j:,:)afilters})
     ((${#vfilters})) && vopts+=(-vf ${(j:,:)vfilters})
-    (($best)) && opts+=(-quality best)
+    (($best)) && vopts+=(-quality best)
     time_start=$SECONDS
     if [[ $audio == "n" ]]
     then

@@ -142,11 +142,8 @@ do
     vfilters=( )
     afilters=( )
     [[ $width != . ]] && vfilters+=("scale=${width}:trunc(${width}/dar/2)*2")
-    if [[ ! -z $start ]]
-    then
-	[[ -z $subs ]] && iopts+=(-ss $start) || opts+=(-ss $start)
-    fi
-    if [[ ! -z $subs ]]
+    [[ -n $start ]] && iopts+=(-ss $start)
+    if [[ -n $subs ]]
     then
 	if [[ $subs == . ]]
 	then
@@ -159,10 +156,16 @@ do
 	fi
 	if [[ $subs =~ ass$ ]]
 	then
-	    vfilters+=(ass=$subs)
+	    subs="ass=$subs"
 	else
-	    vfilters+=(subtitles=$subs)
+	    subs="subtitles=$subs"
 	fi
+        if (($start))
+        then
+            vfilters+=( setpts=PTS+$start/TB $subs setpts=PTS-STARTPTS )
+        else
+            vfilters+=( $subs )
+        fi
     fi
     vfilters+=( $custom_vfilters )
     afilters+=( $custom_afilters )

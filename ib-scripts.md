@@ -4,13 +4,13 @@
 ```
 alert($('.de-post-deleted').length)
 ```
-Заполнить страницу постами (не работает):
+Заполнить страницу постами:
 ```
-$('.post').css('display','inline')
+$('.post-wrapper').css('display','inline')
 ```
 Вернуть:
 ```
-$('.post').css('display','table')
+$('.post-wrapper').css('display','table')
 ```
 Скрыть все посты кроме удалённых:
 ```

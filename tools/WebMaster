@@ -9,6 +9,8 @@ Options:
     -8		- use VP8 video codec
     -9		- use VP9 video codec (default)
     -s time	- start of needle fragment in source video
+        .: detect black frames and cut them (default)
+        time values will be reset to 0 at each file
     -t length	- duration of fragment
     -T time	- end of fragment (from beginning of file)
 	must be specified after -s
@@ -37,6 +39,7 @@ Options:
     -A value	- audio filters
     -V value	- video filters
 Options of prior files will be used as defaults for next.
+Exceptions: filename (-n), time options (-s -t -T), preview (-p).
 END
     exit 1
 }
@@ -76,6 +79,8 @@ set -e
 while [[ ! -z $1 ]]
 do
     unset of
+    start=.
+    unset length
     vfilters=()
     afilters=()
     iopts=()  # ffmpeg input options
@@ -91,7 +96,7 @@ do
 	    a)  audio=$OPTARG;;
             f)  force=1;;
             w)  width=$OPTARG;;
-            s)  time_to_seconds $OPTARG start;;
+            s)  [[ $OPTARG == . ]] && start=$OPTARG || time_to_seconds $OPTARG start;;
             t)  time_to_seconds $OPTARG length;;
 	    T)  length=$(($(time_to_seconds $OPTARG) - start));;
             b)  best=1;;
@@ -138,6 +143,10 @@ do
     else
 	aopts=(-q:a $audio)
     fi
+
+    [[ $start == . ]] && start=$(
+        ffmpeg -i $f -vframes 200 -vf blackdetect=d=0.01 -f null -y /dev/null 2>&1 \
+        | awk -F'[: ]' '/black_start:0 /{print $9}')
 
     vfilters=( )
     afilters=( )

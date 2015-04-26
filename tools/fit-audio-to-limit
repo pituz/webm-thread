@@ -80,5 +80,5 @@ do
         $((result_size / 1024.0)) $((size_skew / 1024.0))
 
     ((audio_bitrate == max_audio_bitrate)) && break
-done
+done || :
 rm $audio_file

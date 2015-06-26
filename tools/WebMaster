@@ -219,7 +219,7 @@ do
     log "Examining video"
     [[ -f "$tmpdir/2pass-0.log" ]] && ! ((force)) || 
 	perform $FFMPEG $iopts -i $f \
-	    -an -map 0:v:0 $opts $vopts -cpu-used $cpuused -pass 1 -passlogfile "$tmpdir/2pass" -f rawvideo -f null /dev/null || break
+	    -an -map 0:v:0 $opts $vopts -cpu-used $cpuused -pass 1 -passlogfile "$tmpdir/2pass" -f null - || break
     echo
     echo -e "\n"
     time_start2pass=$SECONDS

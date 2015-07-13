@@ -1,0 +1,30 @@
+#!/usr/bin/env zsh
+setopt ERR_EXIT
+if [[ -z $1 ]]
+then
+    cat <<EOF
+Usage: $0 /path/to/test-image.png
+
+Warning: run script from empty directory, otherwise it may delete your files (e.g. q*.png).
+EOF
+    false
+fi
+ffmpeg=(ffmpeg -hide_banner -loglevel error)
+$ffmpeg -i $1 -vf scale=400:-1 -vframes 1 -y ref.png
+aspect=$(( $(identify -format '%w.0/%h' ref.png) ))
+for codec in vp8 vp9
+do
+    for q in {00..63..8} 60 61 62 63
+    do
+        $ffmpeg -stats -i ref.png -c:v $codec -qmin $q -qmax $q -b:v 0 -y sample.webm
+        $ffmpeg -f webm -i sample.webm -y sample.png
+        psnr="$(compare -metric PSNR -fuzz 2\% ref.png sample.png compare.png 2>&1 || :)"
+        convert sample.png compare.png "$( ((aspect > 1)) && printf "-" || printf "+")append" \
+            -background wheat1 "label:$(
+                printf 'QP: %d   PSNR: %s dB   SIZE: %.2f KiB' $q $psnr $(($(stat -c %s sample.webm)/1024.0))
+            )" -gravity Center -append q$q.png
+    done
+    convert -background wheat1 label:$codec -gravity Center <(montage -geometry +0+0 q*.png -) -append $codec.png
+    rm q*.png sample.{webm,png} compare.png 
+done
+rm ref.png

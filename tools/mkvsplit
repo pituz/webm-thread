@@ -5,7 +5,7 @@ if [[ $1 -eq 0 ]] || ! [[ -f $2 ]]; then
 fi
 
 ((size_limit=$1*1024))
-echo mkvmerge --split timecodes:$(
+mkvmerge --split timecodes:$(
     LANG=C mkvinfo -v -v $2 |
     awk -F'[ ,()]+' '
         !vtrack && /Track number:/ {t=$5}

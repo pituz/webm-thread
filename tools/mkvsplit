@@ -1,11 +1,12 @@
 #!/usr/bin/env zsh
+zparseopts -D -K q=quiet -quiet=quiet
 if [[ $1 -eq 0 ]] || ! [[ -f $2 ]]; then
-    echo "Usage: $0 limit_in_kb source_file"
+    echo "Usage: $0 [-q|--quiet] limit_in_kb source_file"
     exit 1
 fi
 
 ((size_limit=$1*1024))
-mkvmerge --split timecodes:$(
+mkvmerge ${quiet+-q} --split timecodes:$(
     LANG=C mkvinfo -v -v $2 |
     awk -F'[ ,()]+' '
         !vtrack && /Track number:/ {t=$5}
@@ -19,4 +20,4 @@ mkvmerge --split timecodes:$(
         }
         {prev_time=$14; prev_pos=$16}'
     ) $2 -o "${2:t:r}-split.${2:e}"
-du ${2:t:r}-split*.${2:e}
+[[ -n $quiet ]] || du ${2:t:r}-split*.${2:e}

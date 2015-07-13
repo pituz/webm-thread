@@ -1,0 +1,22 @@
+#!/usr/bin/env zsh
+if [[ $1 -eq 0 ]] || ! [[ -f $2 ]]; then
+    echo "Usage: $0 limit_in_kb source_file"
+    exit 1
+fi
+
+((size_limit=$1*1024))
+echo mkvmerge --split timecodes:$(
+    LANG=C mkvinfo -v -v $2 |
+    awk -F'[ ,()]+' '
+        !vtrack && /Track number:/ {t=$5}
+        !vtrack && /Track type: video at/ {vtrack=t}
+        $3!="SimpleBlock" || $4!="key" || $7!=vtrack {next}
+        $16-split_pos > '$size_limit' {
+            printf("%s%s", comma, prev_time);
+            comma=",";
+            # print (prev_pos-split_pos)/1024 > "/dev/stderr";
+            split_pos=prev_pos-10240;  # 10kb for file header
+        }
+        {prev_time=$14; prev_pos=$16}'
+    ) $2 -o "${2:t:r}-split.${2:e}"
+du ${2:t:r}-split*.${2:e}

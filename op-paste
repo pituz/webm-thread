@@ -15,8 +15,13 @@
 — в webm'ки не нужно включать софтсаб в формате webvtt (FFmpeg это делает по умолчанию при наличии сабов в контейнере, отключается параметром **-sn**): во-первых, это бесполезно (для его отображения на странице должен быть специальный код), а во-вторых, от этого ролики не воспроизводятся в firefox;
 — ролики с opus'ом в firefox зацикливаются не с начала, а с последнего ключевого кадра.
 
-**Ссылки**
-Программы и их документация:
+**Программы и их документация**
 http://webmproject.org http://ffmpeg.org http://mpv.io http://www.bunkus.org/videotools/mkvtoolnix/
-Гуй с минимумом кнопок для ретардов (сперма-only): https://github.com/nixxquality/WebMConverter
-**Оп-паста**, ресурсы для оп-webm'а, скрипт пиления webm'ок на zsh: https://github.com/pituz/webm-thread/
+
+**Фронтенды к ffmpeg для кодирования вебмок**
+CLI, бидон: https://pypi.python.org/pypi/webm
+CLI, zsh: https://github.com/pituz/webm-thread/tree/master/tools
+CLI, дотнет: https://github.com/CherryPerry/ffmpeg-vp9-wrap
+GUI, дотнет: https://github.com/nixxquality/WebMConverter
+
+**Оп-паста**: https://github.com/pituz/webm-thread/op-paste

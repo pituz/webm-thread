@@ -30,9 +30,6 @@ Options:
     -M qp	- qmax (default: 60)
     -B bitrate  - specify video bitrate, bps (suffixes: k, m, g)
 	.: calculate bitrate from file size (default)
-    -p value	- add preview:
-	existing file - picture (not implemented yet)
-	time - copy frame of video
     -n filename - output filename (.webm will be added)
     -F size     - result size, kilobytes (default: 6144)
     -S filename - render subtitles (. to use subs from container)
@@ -220,21 +217,6 @@ do
     echo -e "\n"
     perform mkvmerge -q $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
 						 # so checking for result existence instead
-    if [[ ! -z $preview ]]
-    then
-	pf="$tmpdir/1stframe.webm"
-	if [[ -f $preview ]]
-	then ipreview=(-i $preview)
-	    echo "[SKIP] -p $preview: option not implemented yet"
-	else
-	    ipreview=(-ss $preview -i $of)
-	    perform $FFMPEG $ipreview -b:v 5M -crf 20 -vframes 1 -af volume=0 $vopts $aopts -strict -2 $pf
-	#fi
-	    perform mkvmerge -q $pf + $of -o $of.pr.webm || :
-	    [ -f $of.pr.webm ] && mv $of.pr.webm $of
-	fi
-	#$FFMPEG $ipreview -filter_complex 'anullsrc [a]' -map 0:v -map '[a]' -vframes 1 $aopts 
-    fi
     ofsize="$(stat -c %s $of)"  # result file size
     log "$of encoded. Size: $((ofsize/1024))KB, time (total/audio/1pass/2pass): $((
 	SECONDS - time_start))/$((time_start1pass - time_start))/$((

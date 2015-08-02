@@ -179,7 +179,7 @@ do
     ((${#vfilters})) && vopts+=(-vf ${(j:,:)vfilters})
     (($best)) && vopts+=(-quality best)
     (($cpuused != 1)) && vopts+=(-cpu-used $cpuused)
-    time_start=$SECONDS
+    counters[1]=$SECONDS
     if [[ $audio == "n" ]]
     then
         ((vbitrate = fsize * 8 / length))
@@ -201,7 +201,7 @@ do
 	vbitrate=$force_bitrate
 	log "Forced video bitrate: ${vbitrate}"
     fi
-    time_start1pass=$SECONDS
+    counters[2]=$SECONDS
     if ((force)) || ! [[ -f "$tmpdir/2pass-0.log" ]]
     then
         log "Examining video"
@@ -210,7 +210,7 @@ do
         mv $tmpdir/2pass{.part,}-0.log
     fi
     echo -e "\n"
-    time_start2pass=$SECONDS
+    counters[3]=$SECONDS
     if ((force)) || ! [[ -f $vf ]]
     then
         log "Encoding video"
@@ -226,8 +226,8 @@ do
 						 # so checking for result existence instead
     ofsize="$(stat -c %s $of)"  # result file size
     log "$of encoded. Size: $((ofsize/1024))KB, time (total/audio/1pass/2pass): $((
-	SECONDS - time_start))/$((time_start1pass - time_start))/$((
-	time_start2pass - time_start1pass))/$((SECONDS - time_start2pass))s"
+	SECONDS - counters[1]))/$((counters[2] - counters[1]))/$((
+	counters[3] - counters[2]))/$((SECONDS - counters[3]))s"
     if ((ofsize > fsize * 1024))
     then
 	log "$of is too big, leaving temporary files"

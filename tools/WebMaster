@@ -162,8 +162,8 @@ do
     fi
     vfilters+=( $custom_vfilters )
     afilters+=( $custom_afilters )
-    af="$tmpdir/audio.webm"
-    vf="$tmpdir/video.webm"
+    af="$tmpdir/audio.webm"; af_part="$tmpdir/audio.part.webm"
+    vf="$tmpdir/video.webm"; vf_part="$tmpdir/video.part.webm"
     time_to_seconds "$(ffprobe $f 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')" filelength
     if [[ -z $length ]]
     then
@@ -189,7 +189,8 @@ do
         then
             log "Encoding audio"
 	    perform $FFMPEG $iopts -i $f \
-		-vn -map 0:a:0 $opts $aopts -strict -2 -y $af
+		-vn -map 0:a:0 $opts $aopts -strict -2 -y $af_part
+            mv $af_part $af
         fi
 	((vbitrate = (fsize - $(stat -c%s $af) / 1024) * 8 / length))
     fi
@@ -204,7 +205,8 @@ do
     log "Examining video"
     [[ -f "$tmpdir/2pass-0.log" ]] && ! ((force)) || 
 	perform $FFMPEG $iopts -i $f \
-	    -an -map 0:v:0 $opts $vopts -pass 1 -passlogfile "$tmpdir/2pass" -f null - || break
+	    -an -map 0:v:0 $opts $vopts -pass 1 -passlogfile "$tmpdir/2pass.part" -f null - || break
+        mv $tmpdir/2pass{.part,}-0.log
     echo
     echo -e "\n"
     time_start2pass=$SECONDS
@@ -213,7 +215,8 @@ do
 	perform $FFMPEG $iopts -i $f \
 	    -an -map 0:v:0 $opts $vopts \
 	    -b:v ${vbitrate}K -crf $crf -qmin $qmin -qmax $qmax \
-	    -pass 2 -passlogfile "$tmpdir/2pass" -y $vf || break
+	    -pass 2 -passlogfile "$tmpdir/2pass" -y $vf_part || break
+    mv $vf_part $vf
     #ffmpeg -i $vf ${af+-i} $af -c copy -strict -2 -y $of
     echo -e "\n"
     perform mkvmerge -q $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,

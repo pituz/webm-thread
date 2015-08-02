@@ -82,7 +82,7 @@ do
     vfilters=()
     afilters=()
     iopts=()  # ffmpeg input options
-    vopts=()  # video output options
+    vopts=(-pix_fmt ${PIX_FMT-+yuv420p})  # video output options
     aopts=()  # audio output options
     opts=()  # general output options
     OPTIND=1
@@ -130,7 +130,7 @@ do
     then
 	vopts+=(-c:v libvpx-vp9)
     else
-	vopts=(-c:v libvpx -auto-alt-ref 1 -lag-in-frames 16)
+	vopts+=(-c:v libvpx -auto-alt-ref 1 -lag-in-frames 16)
     fi
     if [[ $audio == "." ]]
 	then aopts=(-c:a copy)

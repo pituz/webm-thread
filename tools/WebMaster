@@ -86,7 +86,7 @@ do
     aopts=()  # audio output options
     opts=()  # general output options
     OPTIND=1
-    while getopts "89a:fbC:c:m:M:B:w:s:t:T:n:S:hF:p:A:V:" o
+    while getopts "89a:fbC:c:m:M:B:w:s:t:T:n:S:hF:A:V:" o
     do
         case $o in
 	    8)  vp9=0;;
@@ -103,7 +103,6 @@ do
 	    m)  qmin=$OPTARG;;
 	    M)  qmax=$OPTARG;;
 	    B)	force_bitrate=$OPTARG;;
-	    p)	preview=$OPTARG;;
 	    n)  of="${OPTARG%.webm}.webm";;
 	    S)  subs=$OPTARG;;
 	    F)  fsize=$OPTARG;;

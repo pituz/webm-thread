@@ -36,6 +36,7 @@ Options:
     -S filename - render subtitles (. to use subs from container)
     -A value	- audio filters
     -V value	- video filters
+    -k          - keep temporary files (directory \$output_filename.webm.tmp)
 Options of prior files will be used as defaults for next.
 Exceptions: filename (-n), time options (-s -t -T).
 END
@@ -86,7 +87,7 @@ do
     aopts=()  # audio output options
     opts=()  # general output options
     OPTIND=1
-    while getopts "89a:fbC:c:m:M:B:w:s:t:T:n:S:hF:A:V:" o
+    while getopts "89a:fbC:c:m:M:B:w:s:t:T:n:S:hF:A:V:k" o
     do
         case $o in
 	    8)  vp9=0;;
@@ -108,6 +109,7 @@ do
 	    F)  fsize=$OPTARG;;
 	    A)	custom_afilters=$OPTARG;;
 	    V)	custom_vfilters=$OPTARG;;
+            k)  keeptmp=1;;
 	    h|?)  help;;
 	esac
     done
@@ -229,9 +231,9 @@ do
 	counters[3] - counters[2]))/$((SECONDS - counters[3]))s"
     if ((ofsize > fsize * 1024))
     then
-	log "$of is too big, leaving temporary files"
+	log "$of is too big"
     else
-	rm -r $tmpdir
+        ((keeptmp)) || rm -r $tmpdir
     fi
     shift
 done

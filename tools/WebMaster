@@ -185,7 +185,7 @@ do
         ((vbitrate = fsize * 8 / length))
         unset af
     else
-	if [[ ! -f $af ]] || ((force))
+        if ((force)) || ! [[ -f $af ]]
         then
             log "Encoding audio"
 	    perform $FFMPEG $iopts -i $f \
@@ -202,21 +202,24 @@ do
 	log "Forced video bitrate: ${vbitrate}"
     fi
     time_start1pass=$SECONDS
-    log "Examining video"
-    [[ -f "$tmpdir/2pass-0.log" ]] && ! ((force)) || 
+    if ((force)) || ! [[ -f "$tmpdir/2pass-0.log" ]]
+    then
+        log "Examining video"
 	perform $FFMPEG $iopts -i $f \
-	    -an -map 0:v:0 $opts $vopts -pass 1 -passlogfile "$tmpdir/2pass.part" -f null - || break
+	    -an -map 0:v:0 $opts $vopts -pass 1 -passlogfile "$tmpdir/2pass.part" -f null -
         mv $tmpdir/2pass{.part,}-0.log
-    echo
+    fi
     echo -e "\n"
     time_start2pass=$SECONDS
-    log "Encoding video"
-    [[ -f $vf ]] && ! ((force)) ||
+    if ((force)) || ! [[ -f $vf ]]
+    then
+        log "Encoding video"
 	perform $FFMPEG $iopts -i $f \
 	    -an -map 0:v:0 $opts $vopts \
 	    -b:v ${vbitrate}K -crf $crf -qmin $qmin -qmax $qmax \
-	    -pass 2 -passlogfile "$tmpdir/2pass" -y $vf_part || break
-    mv $vf_part $vf
+	    -pass 2 -passlogfile "$tmpdir/2pass" -y $vf_part
+        mv $vf_part $vf
+    fi
     #ffmpeg -i $vf ${af+-i} $af -c copy -strict -2 -y $of
     echo -e "\n"
     perform mkvmerge -q $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,

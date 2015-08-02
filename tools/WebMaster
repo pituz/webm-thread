@@ -130,7 +130,7 @@ do
 
     if ((vp9))
     then
-	vopts+=(-c:v libvpx-vp9 -strict -2 -auto-alt-ref 1 -lag-in-frames 25)
+	vopts+=(-c:v libvpx-vp9)
     else
 	vopts=(-c:v libvpx -auto-alt-ref 1 -lag-in-frames 16)
     fi
@@ -180,6 +180,7 @@ do
     ((${#afilters})) && aopts+=(-af ${(j:,:)afilters})
     ((${#vfilters})) && vopts+=(-vf ${(j:,:)vfilters})
     (($best)) && vopts+=(-quality best)
+    (($cpuused != 1)) && vopts+=(-cpu-used $cpuused)
     time_start=$SECONDS
     if [[ $audio == "n" ]]
     then
@@ -205,7 +206,7 @@ do
     log "Examining video"
     [[ -f "$tmpdir/2pass-0.log" ]] && ! ((force)) || 
 	perform $FFMPEG $iopts -i $f \
-	    -an -map 0:v:0 $opts $vopts -cpu-used $cpuused -pass 1 -passlogfile "$tmpdir/2pass" -f null - || break
+	    -an -map 0:v:0 $opts $vopts -pass 1 -passlogfile "$tmpdir/2pass" -f null - || break
     echo
     echo -e "\n"
     time_start2pass=$SECONDS
@@ -213,7 +214,7 @@ do
     [[ -f $vf ]] && ! ((force)) ||
 	perform $FFMPEG $iopts -i $f \
 	    -an -map 0:v:0 $opts $vopts \
-	    -b:v ${vbitrate}K -cpu-used $cpuused -crf $crf -qmin $qmin -qmax $qmax \
+	    -b:v ${vbitrate}K -crf $crf -qmin $qmin -qmax $qmax \
 	    -pass 2 -passlogfile "$tmpdir/2pass" -y $vf || break
     #ffmpeg -i $vf ${af+-i} $af -c copy -strict -2 -y $of
     echo -e "\n"

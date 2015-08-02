@@ -154,27 +154,13 @@ do
     [[ -n $start ]] && iopts+=(-ss $start)
     if [[ -n $subs ]]
     then
-	if [[ $subs == . ]]
-	then
-	    subs="$tmpdir/subs.$f:e"
-	    ln -sf $f $subs
-	else
-	    subsfile=$subs
-	    subs="$tmpdir/subs.$subs:e"
-	    ln -sf $subsfile $subs
-	fi
-	if [[ $subs =~ ass$ ]]
-	then
-	    subs="ass=$subs"
-	else
-	    subs="subtitles=$subs"
-	fi
-        if (($start))
-        then
-            vfilters+=( setpts=PTS+$start/TB $subs setpts=PTS-STARTPTS )
-        else
-            vfilters+=( $subs )
-        fi
+	[[ $subs == . ]] && subs=$f
+	[[ $subs =~ ass$ ]] \
+            && subs="ass='${subs//'\'/'\\'}'" \
+            || subs="subtitles='${subs//'\'/'\\'}'"
+        (($start)) \
+            && vfilters+=( setpts=PTS+$start/TB $subs setpts=PTS-STARTPTS ) \
+            || vfilters+=( $subs )
     fi
     vfilters+=( $custom_vfilters )
     afilters+=( $custom_afilters )

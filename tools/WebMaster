@@ -231,7 +231,13 @@ do
 	counters[3] - counters[2]))/$((SECONDS - counters[3]))s"
     if ((ofsize > fsize * 1024))
     then
-	log "$of is too big"
+	printf '%s is too big, bitrate overshoot: %dK\n' $of \
+            $((bover = (ofsize / 1024 - fsize) * 8 / length))
+        if ((audio >= 10)) && ((audio-bover > 4))
+        then
+            log "using fit-audio-to-limit..."
+            ${0:A:h}/fit-audio-to-limit -F $fsize ${start:+-s} $start $f $of
+        fi
     else
         ((keeptmp)) || rm -r $tmpdir
     fi

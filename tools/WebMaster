@@ -10,7 +10,6 @@ Options:
     -9		- use VP9 video codec (default)
     -s time	- start of needle fragment in source video
         .: detect black frames and cut them (default)
-        time values will be reset to 0 at each file
     -t length	- duration of fragment
     -T time	- end of fragment (from beginning of file)
 	must be specified after -s
@@ -24,8 +23,10 @@ Options:
     -w width	- scale destination video to given width
 	. - don't scale (default)
     -b		- use "best" VP8/VP9 quality setting
-    -C value	- cpu-used VP8/VP9 setting (quality: 0..4, 0 - better, default: 1)
-    -c crf	- specify constant rate factor (default: 16)
+    -C value	- cpu-used (speed) VP8/VP9 setting:
+        0..4 for VP8, 0..8 for VP9
+        0 - better quality, max - faster speed, default: 1
+    -c crf	- constant rate factor (default: 16)
     -m qp	- miniumal quantizer scale, qmin (default: 8)
     -M qp	- qmax (default: 60)
     -B bitrate  - specify video bitrate, bps (suffixes: k, m, g)
@@ -36,7 +37,7 @@ Options:
     -A value	- audio filters
     -V value	- video filters
 Options of prior files will be used as defaults for next.
-Exceptions: filename (-n), time options (-s -t -T), preview (-p).
+Exceptions: filename (-n), time options (-s -t -T).
 END
     exit 1
 }

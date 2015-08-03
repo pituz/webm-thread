@@ -37,13 +37,16 @@ Options:
     -A value	- audio filters
     -V value	- video filters
     -k          - keep temporary files (directory \$output_filename.webm.tmp)
+    -v          - verbose output
 Options of prior files will be used as defaults for next.
 Exceptions: filename (-n), time options (-s -t -T).
 END
     exit 1
 }
 log() {
-    echo -e "[i] $@"
+    fmt=$1
+    shift
+    printf "${bg[blue]}[i]${reset_color} $fmt\n" $@
 }
 time_to_seconds() {
     [[ $1 =~ ^((([0-9]+):)?([0-9]+):)?([0-9.]+)$ ]]
@@ -51,7 +54,7 @@ time_to_seconds() {
     [[ -n $2 ]] && (($2=result)) || echo $result
 }
 perform() {
-    echo $@
+    ((verbose)) && echo "${fg[red]}> ${reset_color}" "$@"
     $@
 }
 # defaults
@@ -74,6 +77,7 @@ unset f
 
 [[ -z $1 ]] && help
 set -e
+autoload colors; colors
 
 while [[ ! -z $1 ]]
 do
@@ -81,7 +85,7 @@ do
     start=.
     unset length
     OPTIND=1
-    while getopts "89a:fbC:c:m:M:B:w:s:t:T:n:S:hF:A:V:k" o
+    while getopts "89a:fbC:c:m:M:B:w:s:t:T:n:S:hF:A:V:kv" o
     do
         case $o in
 	    8)  vp9=0;;
@@ -104,6 +108,7 @@ do
 	    A)	custom_afilters=$OPTARG;;
 	    V)	custom_vfilters=$OPTARG;;
             k)  keeptmp=1;;
+            v)  verbose=1;;
 	    h|?)  help;;
 	esac
     done
@@ -184,7 +189,7 @@ do
     else
         if ((force)) || ! [[ -f $af ]]
         then
-            log "Encoding audio"
+            log "$output_file: encoding audio"
 	    perform $FFMPEG $iopts -i $input_file \
 		-vn -map 0:a:0 $opts $aopts -strict -2 -y $af_part
             mv $af_part $af
@@ -192,8 +197,7 @@ do
 	((audio_size = $(stat -c%s $af) / 1024))
     fi
     ((vbitrate = fsize - audio_size * 8 / length))
-    echo -e "\n"
-    log "Calculated video bitrate: ${vbitrate}"
+    log "Calculated video bitrate: %.1fK" $vbitrate
     if [[ $force_bitrate != '.' ]]
     then
 	vbitrate=$force_bitrate
@@ -204,18 +208,17 @@ do
     counters[2]=$SECONDS
     if ((force)) || ! [[ -f "$tmpdir/2pass-0.log" ]]
     then
-        log "Examining video"
-	perform $FFMPEG $iopts -i $input_file \
+        log "$output_file: examining video"
+	perform $FFMPEG -loglevel error $iopts -i $input_file \
 	    -an -map 0:v:0 $opts $vopts -pass 1 -passlogfile "$tmpdir/2pass.part" -f null -
         mv $tmpdir/2pass{.part,}-0.log
     fi
-    echo -e "\n"
 
     # third step: second pass of video
     counters[3]=$SECONDS
     if ((force)) || ! [[ -f $vf ]]
     then
-        log "Encoding video"
+        log "$output_file: encoding video"
 	perform $FFMPEG $iopts -i $input_file \
 	    -an -map 0:v:0 $opts $vopts \
 	    -b:v ${vbitrate}K -crf $crf -qmin $qmin -qmax $qmax \
@@ -225,7 +228,6 @@ do
 
     # muxing result
     #ffmpeg -i $vf ${af+-i} $af -c copy -y $output_file
-    echo -e "\n"
     perform mkvmerge -q $vf $af -o $output_file || [[ $? == 1 ]] || break
 
     # checking output file size
@@ -235,7 +237,7 @@ do
 	counters[3] - counters[2]))/$((SECONDS - counters[3]))s"
     if ((ofsize > fsize * 1024))
     then
-	printf '%s is too big, bitrate overshoot: %dK\n' $output_file \
+	log '%s is too big, bitrate overshoot: %dK' $output_file \
             $((bitrate_overshoot = (ofsize / 1024 - fsize) * 8 / length))
         if ((audio >= 10)) && ((audio - bitrate_overshoot > 4))
         then
@@ -245,4 +247,5 @@ do
     else
         ((keeptmp)) || rm -r $tmpdir
     fi
+    echo "${fg[red]}-----${reset_color}"
 done

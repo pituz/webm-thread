@@ -77,15 +77,9 @@ set -e
 
 while [[ ! -z $1 ]]
 do
-    unset of
+    unset output_file
     start=.
     unset length
-    vfilters=()
-    afilters=()
-    iopts=()  # ffmpeg input options
-    vopts=(-pix_fmt ${PIX_FMT-+yuv420p})  # video output options
-    aopts=()  # audio output options
-    opts=()  # general output options
     OPTIND=1
     while getopts "89a:fbC:c:m:M:B:w:s:t:T:n:S:hF:A:V:k" o
     do
@@ -104,7 +98,7 @@ do
 	    m)  qmin=$OPTARG;;
 	    M)  qmax=$OPTARG;;
 	    B)	force_bitrate=$OPTARG;;
-	    n)  of="${OPTARG%.webm}.webm";;
+	    n)  output_file="${OPTARG%.webm}.webm";;
 	    S)  subs=$OPTARG;;
 	    F)  fsize=$OPTARG;;
 	    A)	custom_afilters=$OPTARG;;
@@ -114,25 +108,31 @@ do
 	esac
     done
     shift $((OPTIND - 1))
-    [[ $1 == . ]] || f=$1
-    [[ -z $f ]] && help
+    [[ $1 == . ]] || input_file=$1
+    [[ -z $input_file ]] && help
+    shift
 
-    [[ -z $of ]] && of="${f:t:r}.webm"  # strip path and extension
-    [[ $of == $f ]] && of=${f/webm/converted.webm}
-    tmpdir="$of.tmp"
-    if ! ((force)) && [[ -f $of ]]
-    then
-        shift
-        continue
-    fi
+    # set output filename
+    [[ -z $output_file ]] && output_file="${f:t:r}.webm"  # strip path and extension
+    [[ $output_file == $input_file ]] && output_file=${input_file/webm/converted.webm}
+    # without -f skip existing files
+    ! ((force)) && [[ -f $output_file ]] && continue
+
+    # temporary dir and files
+    tmpdir="$output_file.tmp"
+    af="$tmpdir/audio.webm"; af_part="$tmpdir/audio.part.webm"
+    vf="$tmpdir/video.webm"; vf_part="$tmpdir/video.part.webm"
     mkdir -p $tmpdir
 
-    if ((vp9))
-    then
-	vopts+=(-c:v libvpx-vp9)
-    else
-	vopts+=(-c:v libvpx -auto-alt-ref 1 -lag-in-frames 16)
-    fi
+    # video output options
+    vopts=(-pix_fmt ${PIX_FMT-+yuv420p})
+    ((vp9)) \
+	&& vopts+=(-c:v libvpx-vp9) \
+	|| vopts+=(-c:v libvpx -auto-alt-ref 1 -lag-in-frames 16)
+    (($best)) && vopts+=(-quality best)
+    (($cpuused != 1)) && vopts+=(-cpu-used $cpuused)
+
+    # audio output options
     if [[ $audio == "." ]]
 	then aopts=(-c:a copy)
     elif (($audio >= 10))
@@ -143,58 +143,55 @@ do
 	aopts=(-q:a $audio)
     fi
 
+    # input options
+    iopts=()
     [[ $start == . ]] && start=$(
         ffmpeg -i $f -vframes 200 -vf blackdetect=d=0.01 -f null -y /dev/null 2>&1 \
         | awk -F'[: ]' '/black_start:0 /{print $9}')
+    [[ -n $start ]] && iopts+=(-ss $start) || unset start
 
+    # filters
     vfilters=( )
     afilters=( )
     [[ $width != . ]] && vfilters+=("scale=${width}:trunc(${width}/dar/2)*2")
-    [[ -n $start ]] && iopts+=(-ss $start)
     if [[ -n $subs ]]
     then
-	[[ $subs == . ]] && subs=$f
+	[[ $subs == . ]] && subs=$input_file
 	[[ $subs =~ ass$ ]] \
             && subs="ass='${subs//'\'/'\\'}'" \
             || subs="subtitles='${subs//'\'/'\\'}'"
+        # hack: temporary shift frame timings to render subtitles
         (($start)) \
             && vfilters+=( setpts=PTS+$start/TB $subs setpts=PTS-STARTPTS ) \
             || vfilters+=( $subs )
     fi
     vfilters+=( $custom_vfilters )
     afilters+=( $custom_afilters )
-    af="$tmpdir/audio.webm"; af_part="$tmpdir/audio.part.webm"
-    vf="$tmpdir/video.webm"; vf_part="$tmpdir/video.part.webm"
-    time_to_seconds "$(ffprobe $f 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')" filelength
-    if [[ -z $length ]]
-    then
-	if [[ -z $start ]]
-	then
-	    length=$filelength
-	else
-	    ((length = filelength - start))
-	fi
-    fi
-    opts+=(-t $length)
     ((${#afilters})) && aopts+=(-af ${(j:,:)afilters})
     ((${#vfilters})) && vopts+=(-vf ${(j:,:)vfilters})
-    (($best)) && vopts+=(-quality best)
-    (($cpuused != 1)) && vopts+=(-cpu-used $cpuused)
+
+    # general output options
+    opts=()
+    time_to_seconds "$(ffprobe $input_file 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')" source_length
+    [[ -z $length ]] && ((length = source_length - start))
+    opts+=(-t $length)
+
+    # first step: audio
     counters[1]=$SECONDS
     if [[ $audio == "n" ]]
     then
-        ((vbitrate = fsize * 8 / length))
         unset af
     else
         if ((force)) || ! [[ -f $af ]]
         then
             log "Encoding audio"
-	    perform $FFMPEG $iopts -i $f \
+	    perform $FFMPEG $iopts -i $input_file \
 		-vn -map 0:a:0 $opts $aopts -strict -2 -y $af_part
             mv $af_part $af
         fi
-	((vbitrate = (fsize - $(stat -c%s $af) / 1024) * 8 / length))
+	((audio_size = $(stat -c%s $af) / 1024))
     fi
+    ((vbitrate = fsize - audio_size * 8 / length))
     echo -e "\n"
     log "Calculated video bitrate: ${vbitrate}"
     if [[ $force_bitrate != '.' ]]
@@ -202,44 +199,50 @@ do
 	vbitrate=$force_bitrate
 	log "Forced video bitrate: ${vbitrate}"
     fi
+
+    # second step: first pass of video
     counters[2]=$SECONDS
     if ((force)) || ! [[ -f "$tmpdir/2pass-0.log" ]]
     then
         log "Examining video"
-	perform $FFMPEG $iopts -i $f \
+	perform $FFMPEG $iopts -i $input_file \
 	    -an -map 0:v:0 $opts $vopts -pass 1 -passlogfile "$tmpdir/2pass.part" -f null -
         mv $tmpdir/2pass{.part,}-0.log
     fi
     echo -e "\n"
+
+    # third step: second pass of video
     counters[3]=$SECONDS
     if ((force)) || ! [[ -f $vf ]]
     then
         log "Encoding video"
-	perform $FFMPEG $iopts -i $f \
+	perform $FFMPEG $iopts -i $input_file \
 	    -an -map 0:v:0 $opts $vopts \
 	    -b:v ${vbitrate}K -crf $crf -qmin $qmin -qmax $qmax \
 	    -pass 2 -passlogfile "$tmpdir/2pass" -y $vf_part
         mv $vf_part $vf
     fi
-    #ffmpeg -i $vf ${af+-i} $af -c copy -strict -2 -y $of
+
+    # muxing result
+    #ffmpeg -i $vf ${af+-i} $af -c copy -y $output_file
     echo -e "\n"
-    perform mkvmerge -q $vf $af -o $of || [[ -f $of ]]  # mkvmerge doesn't return succeful exit code,
-						 # so checking for result existence instead
-    ofsize="$(stat -c %s $of)"  # result file size
-    log "$of encoded. Size: $((ofsize/1024))KB, time (total/audio/1pass/2pass): $((
+    perform mkvmerge -q $vf $af -o $output_file || [[ $? == 1 ]] || break
+
+    # checking output file size
+    ofsize="$(stat -c %s $output_file)"
+    log "$output_file encoded. Size: $((ofsize/1024))KB, time (total/audio/1pass/2pass): $((
 	SECONDS - counters[1]))/$((counters[2] - counters[1]))/$((
 	counters[3] - counters[2]))/$((SECONDS - counters[3]))s"
     if ((ofsize > fsize * 1024))
     then
-	printf '%s is too big, bitrate overshoot: %dK\n' $of \
-            $((bover = (ofsize / 1024 - fsize) * 8 / length))
-        if ((audio >= 10)) && ((audio-bover > 4))
+	printf '%s is too big, bitrate overshoot: %dK\n' $output_file \
+            $((bitrate_overshoot = (ofsize / 1024 - fsize) * 8 / length))
+        if ((audio >= 10)) && ((audio - bitrate_overshoot > 4))
         then
             log "using fit-audio-to-limit..."
-            ${0:A:h}/fit-audio-to-limit -F $fsize ${start:+-s} $start $f $of
+            ${0:A:h}/fit-audio-to-limit -F $fsize ${start:+-s} $start $input_file $output_file
         fi
     else
         ((keeptmp)) || rm -r $tmpdir
     fi
-    shift
 done

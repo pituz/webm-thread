@@ -60,14 +60,15 @@ perform() {
 # defaults
 width=.
 fsize=6144
-best=0
 audio=64
 force=0
 vp9=1
-crf=16
-cpuused=1
-qmin=8
-qmax=60
+typeset -A encopts  # options for 2nd video pass
+vencopts=(
+    -crf 16
+    -qmin 8
+    -qmax 60
+)
 force_bitrate=.
 [[ -n $FFMPEG ]] || FFMPEG=(ffmpeg -hide_banner -v warning -stats)
 
@@ -96,11 +97,11 @@ do
             s)  [[ $OPTARG == . ]] && start=$OPTARG || time_to_seconds $OPTARG start;;
             t)  time_to_seconds $OPTARG length;;
 	    T)  length=$(($(time_to_seconds $OPTARG) - start));;
-            b)  best=1;;
-	    C)  cpuused=$OPTARG;;
-	    c)	crf=$OPTARG;;
-	    m)  qmin=$OPTARG;;
-	    M)  qmax=$OPTARG;;
+            b)  vencopts[-quality]="best";;
+	    C)  vencopts[-speed]=$OPTARG;;
+	    c)	vencopts[-crf]=$OPTARG;;
+	    m)  vencopts[-qmin]=$OPTARG;;
+	    M)  vencopts[-qmax]=$OPTARG;;
 	    B)	force_bitrate=$OPTARG;;
 	    n)  output_file="${OPTARG%.webm}.webm";;
 	    S)  subs=$OPTARG;;
@@ -134,8 +135,6 @@ do
     ((vp9)) \
 	&& vopts+=(-c:v libvpx-vp9) \
 	|| vopts+=(-c:v libvpx -auto-alt-ref 1 -lag-in-frames 16)
-    (($best)) && vopts+=(-quality best)
-    (($cpuused != 1)) && vopts+=(-cpu-used $cpuused)
 
     # audio output options
     if [[ $audio == "." ]]
@@ -220,8 +219,8 @@ do
     then
         log "$output_file: encoding video"
 	perform $FFMPEG $iopts -i $input_file \
-	    -an -map 0:v:0 $opts $vopts \
-	    -b:v ${vbitrate}K -crf $crf -qmin $qmin -qmax $qmax \
+	    -map 0:v:0 $opts $vopts \
+	    -b:v ${vbitrate}K ${(kv)vencopts} \
 	    -pass 2 -passlogfile "$tmpdir/2pass" -y $vf_part
         mv $vf_part $vf
     fi

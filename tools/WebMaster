@@ -29,7 +29,7 @@ Options:
     -c crf	- constant rate factor (default: 16)
     -m qp	- miniumal quantizer scale, qmin (default: 8)
     -M qp	- qmax (default: 60)
-    -B bitrate  - specify video bitrate, bps (suffixes: k, m, g)
+    -B bitrate  - specify video bitrate, kbit/s
 	.: calculate bitrate from file size (default)
     -n filename - output filename (.webm will be added)
     -F size     - result size, kilobytes (default: 6144)
@@ -44,9 +44,11 @@ END
     exit 1
 }
 log() {
-    fmt=$1
+    local prompt="${bg[blue]} i ${reset_color}"
+    [[ $1 == '-p' ]] && prompt=$2 && shift 2
+    local fmt=$1
     shift
-    printf "${bg[blue]}[i]${reset_color} $fmt\n" $@
+    printf "$prompt $fmt\n" $@
 }
 time_to_seconds() {
     [[ $1 =~ ^((([0-9]+):)?([0-9]+):)?([0-9.]+)$ ]]
@@ -69,7 +71,6 @@ vencopts=(
     -qmin 8
     -qmax 60
 )
-force_bitrate=.
 [[ -n $FFMPEG ]] || FFMPEG=(ffmpeg -hide_banner -v warning -stats)
 
 # config file
@@ -179,6 +180,8 @@ do
     time_to_seconds "$(ffprobe $input_file 2>&1|sed -n 's/.*Duration: \([^,]\+\),.*/\1/p')" source_length
     [[ -z $length ]] && ((length = source_length - start))
     opts+=(-t $length)
+    log -p "${fg[green]}==>$reset_color" 'Compressing %s (%d seconds, overall bitrate: %dK)' \
+        $output_file $length $((fsize * 8 / length))
 
     # first step: audio
     counters[1]=$SECONDS
@@ -188,20 +191,16 @@ do
     else
         if ((force)) || ! [[ -f $af ]]
         then
-            log "$output_file: encoding audio"
+            log '%s: encoding audio (%s)' $output_file "$aopts"
 	    perform $FFMPEG $iopts -i $input_file \
 		-vn -map 0:a:0 $opts $aopts -strict -2 -y $af_part
             mv $af_part $af
         fi
 	((audio_size = $(stat -c%s $af) / 1024))
     fi
-    ((vbitrate = fsize - audio_size * 8 / length))
-    log "Calculated video bitrate: %.1fK" $vbitrate
-    if [[ $force_bitrate != '.' ]]
-    then
-	vbitrate=$force_bitrate
-	log "Forced video bitrate: ${vbitrate}"
-    fi
+    log '%s: audio size: %d KiB, bitrate for video: %dK' \
+        $output_file $audio_size $((vbitrate = fsize - audio_size * 8 / length))
+    ((force_bitrate)) && vbitrate=$force_bitrate
 
     # second step: first pass of video
     counters[2]=$SECONDS
@@ -217,7 +216,7 @@ do
     counters[3]=$SECONDS
     if ((force)) || ! [[ -f $vf ]]
     then
-        log "$output_file: encoding video"
+        log "%s: encoding video (-b:v %dK %s)" $output_file $vbitrate "${(kv)vencopts}"
 	perform $FFMPEG $iopts -i $input_file \
 	    -map 0:v:0 $opts $vopts \
 	    -b:v ${vbitrate}K ${(kv)vencopts} \
@@ -231,20 +230,17 @@ do
 
     # checking output file size
     ofsize="$(stat -c %s $output_file)"
-    log "$output_file encoded. Size: $((ofsize/1024))KB, time (total/audio/1pass/2pass): $((
-	SECONDS - counters[1]))/$((counters[2] - counters[1]))/$((
-	counters[3] - counters[2]))/$((SECONDS - counters[3]))s"
-    if ((ofsize > fsize * 1024))
-    then
-	log '%s is too big, bitrate overshoot: %dK' $output_file \
-            $((bitrate_overshoot = (ofsize / 1024 - fsize) * 8 / length))
-        if ((audio >= 10)) && ((audio - bitrate_overshoot > 4))
-        then
-            log "using fit-audio-to-limit..."
-            ${0:A:h}/fit-audio-to-limit -F $fsize ${start:+-s} $start $input_file $output_file
-        fi
-    else
-        ((keeptmp)) || rm -r $tmpdir
-    fi
+    log '%s encoded: size %d KiB, time: total %d | audio %d | pass1 %d | pass2 %d seconds.' \
+        $output_file $((ofsize/1024)) $((SECONDS - counters[1])) $((counters[2] - counters[1])) \
+        $((counters[3] - counters[2])) $((SECONDS - counters[3]))
+    ((ofsize > fsize * 1024)) \
+        && {
+            log '%s is too big, bitrate overshoot: %dK' $output_file \
+                $((bitrate_overshoot = (ofsize / 1024 - fsize) * 8 / length))
+            # lowering opus bitrate with fit-audio-to-limit
+            ((audio >= 10)) && ((audio - bitrate_overshoot > 4)) \
+                && perform ${0:A:h}/fit-audio-to-limit -F $fsize \
+                    ${start:+-s} $start $input_file $output_file
+        } || ((keeptmp)) || rm -r $tmpdir
     echo "${fg[red]}-----${reset_color}"
 done

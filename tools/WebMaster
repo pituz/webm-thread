@@ -65,7 +65,7 @@ fsize=6144
 audio=64
 force=0
 vp9=1
-typeset -A encopts  # options for 2nd video pass
+typeset -A vencopts  # options for 2nd video pass
 vencopts=(
     -crf 16
     -qmin 8

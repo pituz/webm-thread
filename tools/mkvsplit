@@ -5,19 +5,27 @@ if [[ $1 -eq 0 ]] || ! [[ -f $2 ]]; then
     exit 1
 fi
 
+input_file=$2
+output_file="${2:t:r}-split.${2:e}"
+
 ((size_limit=$1*1024))
-mkvmerge ${quiet+-q} --split timecodes:$(
-    LANG=C mkvinfo -v -v $2 |
+timecodes=( $(
+    LANG=C mkvinfo -v -v $input_file |
     awk -F'[ ,()]+' '
         !vtrack && /Track number:/ {t=$5}
         !vtrack && /Track type: video at/ {vtrack=t}
         $3!="SimpleBlock" || $4!="key" || $7!=vtrack {next}
         $16-split_pos > '$size_limit' {
-            printf("%s%s", comma, prev_time);
-            comma=",";
-            # print (prev_pos-split_pos)/1024 > "/dev/stderr";
+            printf("%s ", prev_time);
+            print (prev_pos-split_pos)/1024 > "/dev/stderr";
             split_pos=prev_pos-10240;  # 10kb for file header
         }
         {prev_time=$14; prev_pos=$16}'
-    ) $2 -o "${2:t:r}-split.${2:e}"
+    ) )
+if ((MUX_WITH_FFMPEG)); then
+    ffmpeg -hide_banner -v error -i $input_file \
+        -c copy -f segment -segment_times ${(j:,:)timecodes} "${output_file:r}-%003d.${output_file:e}"
+else
+    mkvmerge ${quiet+-q} --split timecodes:${(j:,:)timecodes} $input_file -o $output_file
+fi
 [[ -n $quiet ]] || du ${2:t:r}-split*.${2:e}

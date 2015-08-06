@@ -24,7 +24,8 @@ timecodes=( $(
     ) )
 if ((MUX_WITH_FFMPEG)); then
     ffmpeg -hide_banner -v error -i $input_file \
-        -c copy -f segment -segment_times ${(j:,:)timecodes} "${output_file:r}-%003d.${output_file:e}"
+        -c copy -f segment -reset_timestamps 1 -segment_times ${(j:,:)timecodes} \
+        "${output_file:r}-%003d.${output_file:e}"
 else
     mkvmerge ${quiet+-q} --split timecodes:${(j:,:)timecodes} $input_file -o $output_file
 fi

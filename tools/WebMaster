@@ -40,6 +40,11 @@ Options:
     -v          - verbose output
 Options of prior files will be used as defaults for next.
 Exceptions: filename (-n), time options (-s -t -T).
+
+Environment variables:
+    FFMPEG      - path to ffmpeg binary
+    PIX_FMT     - pixel format to use (default: +yuv420p)
+    MUX_WITH_FFMPEG - use ffmpeg for muxing instead of mkvmerge
 END
     exit 1
 }

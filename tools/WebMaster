@@ -225,8 +225,12 @@ do
     fi
 
     # muxing result
-    #ffmpeg -i $vf ${af+-i} $af -c copy -y $output_file
-    perform mkvmerge -q $vf $af -o $output_file || [[ $? == 1 ]] || break
+    if ((MUX_WITH_FFMPEG))
+    then
+        perform $FFMPEG -i $vf ${af+-i} $af -c copy -y $output_file
+    else
+        perform mkvmerge -q $vf $af -o $output_file || [[ $? == 1 ]] || break
+    fi
 
     # checking output file size
     ofsize="$(stat -c %s $output_file)"

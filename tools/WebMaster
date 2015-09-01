@@ -40,6 +40,11 @@ Options:
     -v          - verbose output
 Options of prior files will be used as defaults for next.
 Exceptions: filename (-n), time options (-s -t -T).
+
+Environment variables:
+    FFMPEG      - path to ffmpeg binary
+    PIX_FMT     - pixel format to use (default: +yuv420p)
+    MUX_WITH_FFMPEG - use ffmpeg for muxing instead of mkvmerge
 END
     exit 1
 }
@@ -161,14 +166,14 @@ do
     [[ $width != . ]] && vfilters+=("scale=${width}:trunc(${width}/dar/2)*2")
     if [[ -n $subs ]]
     then
-	[[ $subs == . ]] && subs=$input_file
-	[[ $subs =~ ass$ ]] \
-            && subs="ass='${subs//'\'/'\\'}'" \
-            || subs="subtitles='${subs//'\'/'\\'}'"
+	[[ $subs == . ]] && subs_file=$input_file || subs_file=$subs
+	[[ $subs_file =~ ass$ ]] \
+            && subs_filter="ass='${subs_file//'\'/'\\'}'" \
+            || subs_filter="subtitles='${subs_file//'\'/'\\'}'"
         # hack: temporary shift frame timings to render subtitles
         (($start)) \
-            && vfilters+=( setpts=PTS+$start/TB $subs setpts=PTS-STARTPTS ) \
-            || vfilters+=( $subs )
+            && vfilters+=( setpts=PTS+$start/TB $subs_filter setpts=PTS-STARTPTS ) \
+            || vfilters+=( $subs_filter )
     fi
     vfilters+=( $custom_vfilters )
     afilters+=( $custom_afilters )
@@ -225,8 +230,12 @@ do
     fi
 
     # muxing result
-    #ffmpeg -i $vf ${af+-i} $af -c copy -y $output_file
-    perform mkvmerge -q $vf $af -o $output_file || [[ $? == 1 ]] || break
+    if ((MUX_WITH_FFMPEG))
+    then
+        perform $FFMPEG -i $vf ${af+-i} $af -c copy -y $output_file
+    else
+        perform mkvmerge -q $vf $af -o $output_file || [[ $? == 1 ]] || break
+    fi
 
     # checking output file size
     ofsize="$(stat -c %s $output_file)"

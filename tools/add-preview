@@ -1,0 +1,31 @@
+#!/usr/bin/env zsh
+zparseopts -D -A opts s:
+if [[ ! -f $1 ]]; then
+    cat<<END
+Usage: $0 [options] file.webm
+Options: 
+    -s time     - preview frame position (default - first)
+        TODO: detect first non-black frame and use it by default
+        TODO#2: threat single-color frames as black
+    -w width    - width of method 1 frame
+        TODO: remove and implement autodetection
+    -i file     - preview source
+    -m method
+        not implemented yet
+END
+    exit 1
+fi
+
+start=${opts[s]:-0}
+preview_source=${opts[-i]:-$1}
+input_file="$1"
+output_file="${1:r}.pr.webm"
+
+# method 1: add preview as separate track with slightly bigger resolution
+ffmpeg -hide_banner -loglevel error \
+    -i $input_file \
+    -ss $start -i $preview_source \
+    -c copy -map 0:v -map 0:a -map 1:v \
+    -c:v:1 vp9 -filter:v:1 "trim=end_frame=2,scale=${opts[w]:-iw+1}:-1,format=yuv420p" \
+    $output_file
+du $output_file

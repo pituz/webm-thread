@@ -52,8 +52,9 @@ video_size=$(( $(ffmpeg -hide_banner -v error -i $video_src -an -c copy -f matro
 result_size=0
 ((audio_bitrate = (size_limit - video_size) * 8 / duration))
 try=1;
-printf "Limit: %d KiB; video size: %d KiB; space for audio: %d KiB; duration: %d seconds; bitrate: %.2f kbps\n" \
-    $((size_limit/1024)) $((video_size/1024)) $(((size_limit - video_size) / 1024)) $duration $((audio_bitrate / 1024))
+printf "Fitting %s to %d KiB limit by compressing audio..\n" $video_src $((size_limit/1024))
+printf "video size: %d KiB; space for audio: %d KiB; duration: %d seconds; bitrate: %.2f kbps\n" \
+    $((video_size/1024)) $(((size_limit - video_size) / 1024)) $duration $((audio_bitrate / 1024))
 ((audio_bitrate < 0)) && die "Impossiburu: no space for audio"
 
 while ((result_size > size_limit)) || ((result_size + max_size_skew < size_limit))

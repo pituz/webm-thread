@@ -1,7 +1,7 @@
 --[[
-usage: place script into $HOME/.mpv/lua/ directory (mpv 0.4 and later)
+usage: place script into $HOME/.mpv/scripts/ directory (%APPDATA%\mpv\scripts on windows)
   or run mpv --lua path/to/capture.lua
-  or add "lua=/absolute/path/to/capture.lua" to ~/.mpv/config
+  or add "lua=/absolute/path/to/capture.lua" to ~/.config/mpv/mpv.conf (%APPDATA%\mpv\mpv.conf on windows)
 keybindings:
   a - capture fragment: at first press script remembers start position, at second outputs command for encoding
   c - crop: first press remembers mouse cursor coords, second outputs crop filter parameters.

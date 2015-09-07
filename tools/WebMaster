@@ -125,7 +125,7 @@ do
     shift
 
     # set output filename
-    [[ -z $output_file ]] && output_file="${f:t:r}.webm"  # strip path and extension
+    [[ -z $output_file ]] && output_file="${input_file:t:r}.webm"  # strip path and extension
     [[ $output_file == $input_file ]] && output_file=${input_file/webm/converted.webm}
     # without -f skip existing files
     ! ((force)) && [[ -f $output_file ]] && continue

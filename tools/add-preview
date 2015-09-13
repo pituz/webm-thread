@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-zparseopts -D -A opts s:
+zparseopts -D -a optlist -A opts s: w: i: 8
 if [[ ! -f $1 ]]; then
     cat<<END
 Usage: $0 [options] file.webm
@@ -8,10 +8,13 @@ Options:
         TODO: detect first non-black frame and use it by default
         TODO#2: threat single-color frames as black
     -w width    - width of method 1 frame
+	default: enlarge preview source width by 1 pixel
         TODO: remove and implement autodetection
     -i file     - preview source
+	default: use input file
     -m method
         not implemented yet
+    -8          - use VP8 codec for method 1 frame
 END
     exit 1
 fi
@@ -20,12 +23,14 @@ start=${opts[s]:-0}
 preview_source=${opts[-i]:-$1}
 input_file="$1"
 output_file="${1:r}.pr.webm"
+(( ${optlist[(I)-8]} )) && codec=libvpx || codec=libvpx-vp9
+exit 1
 
 # method 1: add preview as separate track with slightly bigger resolution
 ffmpeg -hide_banner -loglevel error \
     -i $input_file \
     -ss $start -i $preview_source \
     -c copy -map 0:v -map 0:a -map 1:v \
-    -c:v:1 vp9 -filter:v:1 "trim=end_frame=2,scale=${opts[w]:-iw+1}:-1,format=yuv420p" \
+    -c:v:1 $codec -filter:v:1 "trim=end_frame=2,scale=${opts[w]:-iw+1}:-1,format=yuv420p" \
     $output_file
 du $output_file

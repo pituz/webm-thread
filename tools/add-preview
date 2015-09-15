@@ -19,12 +19,11 @@ END
     exit 1
 fi
 
-start=${opts[s]:-0}
+start=${opts[-s]:-0}
 preview_source=${opts[-i]:-$1}
 input_file="$1"
 output_file="${1:r}.pr.webm"
 (( ${optlist[(I)-8]} )) && codec=libvpx || codec=libvpx-vp9
-exit 1
 
 # method 1: add preview as separate track with slightly bigger resolution
 ffmpeg -hide_banner -loglevel error \

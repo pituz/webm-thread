@@ -150,7 +150,7 @@ do
     elif [[ $audio == "n" ]]
 	then aopts=(-an)
     else
-	aopts=(-q:a $audio)
+	aopts=(-c:a libvorbis -q:a $audio)
     fi
 
     # input options

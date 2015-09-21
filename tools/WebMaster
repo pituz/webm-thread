@@ -156,7 +156,7 @@ do
     # input options
     iopts=()
     [[ $start == . ]] && start=$(
-        ffmpeg -i $f -vframes 200 -vf blackdetect=d=0.01 -f null -y /dev/null 2>&1 \
+        ffmpeg -i $input_file -vframes 200 -vf blackdetect=d=0.01 -f null -y /dev/null 2>&1 \
         | awk -F'[: ]' '/black_start:0 /{print $9}')
     [[ -n $start ]] && iopts+=(-ss $start) || unset start
 

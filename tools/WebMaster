@@ -234,7 +234,7 @@ do
     then
         perform $FFMPEG -i $vf ${af+-i} $af -c copy -y $output_file
     else
-        perform mkvmerge -q $vf $af -o $output_file || [[ $? == 1 ]] || break
+        perform mkvmerge -q $vf $af -o $output_file || [[ $? == 1 ]]
     fi
 
     # checking output file size
